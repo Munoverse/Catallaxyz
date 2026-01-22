@@ -1,0 +1,65 @@
+# 依赖目录
+node_modules/
+.pnpm-store/
+
+# 环境变量文件（包含敏感信息）
+.env
+.env.local
+.env.*.local
+*.env
+
+# 构建输出
+.next/
+out/
+build/
+dist/
+target/
+
+# 日志文件
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# 编辑器配置
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# Solana/Anchor 相关
+.anchor/
+test-ledger/
+**/*.rs.bk
+
+# 测试相关
+coverage/
+test-accounts/
+test-usdc-config.json
+
+# 缓存
+.cache/
+*.tsbuildinfo
+
+# 压缩包
+*.tar.bz2
+*.tar.gz
+*.zip
+
+# 其他
+.yarn/
+.pnp.js
+.vercel/
+
+'EOF'
+
+# 只保留 contracts 目录
+/*
+!contracts/
+!.gitignore
+EOF
