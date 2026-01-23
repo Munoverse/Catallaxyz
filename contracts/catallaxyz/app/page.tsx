@@ -129,6 +129,9 @@ export default function Home() {
             </p>
           </div>
         </div>
+        <div className="mt-8 rounded-lg border border-blue-100 bg-blue-50 px-4 py-3 text-sm text-blue-800">
+          连续 7 天无交易的市场将由管理员后台终结，避免用户自行触发。
+        </div>
       </div>
 
       {/* Stats */}

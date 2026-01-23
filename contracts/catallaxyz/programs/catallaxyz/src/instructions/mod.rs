@@ -19,9 +19,9 @@ pub mod withdraw_usdc;
 
 pub mod request_randomness;
 pub mod settle_with_randomness;
-pub mod terminate_if_inactive;
 
 // Admin instructions
+pub mod terminate_if_inactive;
 pub mod pause_market;
 pub mod resume_market;
 pub mod update_fee_rates;
@@ -67,10 +67,10 @@ pub use withdraw_usdc::*;
 pub use request_randomness::*;
 #[allow(ambiguous_glob_reexports)]
 pub use settle_with_randomness::*;
-#[allow(ambiguous_glob_reexports)]
-pub use terminate_if_inactive::*;
 
 // Admin instructions
+#[allow(ambiguous_glob_reexports)]
+pub use terminate_if_inactive::*;
 #[allow(ambiguous_glob_reexports)]
 pub use pause_market::*;
 #[allow(ambiguous_glob_reexports)]

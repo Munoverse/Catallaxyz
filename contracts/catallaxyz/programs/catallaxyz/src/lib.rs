@@ -77,7 +77,7 @@ pub mod catallaxyz {
     }
 
     /// Terminate a market if it has been inactive for >= 7 days.
-    /// Permissionless: anyone can call this (keepers / frontend).
+    /// Admin only: global authority must call this.
     pub fn terminate_if_inactive(ctx: Context<TerminateIfInactive>) -> Result<()> {
         instructions::terminate_if_inactive::handler(ctx)
     }

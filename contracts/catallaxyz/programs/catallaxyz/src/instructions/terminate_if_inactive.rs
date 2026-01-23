@@ -8,8 +8,8 @@ use crate::states::{global::Global, Market};
 /// Terminate a market if it has been inactive for >= 7 days.
 ///
 /// Notes:
-/// - Solana programs can't run automatically; this instruction is permissionless and can be
-///   called by anyone (keepers / frontend) to finalize an inactive market.
+/// - Solana programs can't run automatically; this instruction is admin-only and must be
+///   called by the global authority (backend/ops) to finalize an inactive market.
 /// - Final prices are taken from the market's last observed trade/order price (best-effort).
 #[derive(Accounts)]
 pub struct TerminateIfInactive<'info> {
@@ -20,6 +20,12 @@ pub struct TerminateIfInactive<'info> {
         bump = global.bump
     )]
     pub global: Account<'info, Global>,
+
+    /// Global authority (admin)
+    #[account(
+        constraint = authority.key() == global.authority @ TerminatorError::Unauthorized
+    )]
+    pub authority: Signer<'info>,
 
     #[account(
         mut,
@@ -61,10 +67,10 @@ pub struct TerminateIfInactive<'info> {
     )]
     pub creator_usdc_account: InterfaceAccount<'info, TokenAccount>,
 
-    /// Caller USDC token account (receives reward)
+    /// Admin USDC token account (receives reward)
     #[account(
         mut,
-        constraint = caller_usdc_account.owner == caller.key(),
+        constraint = caller_usdc_account.owner == authority.key(),
         constraint = caller_usdc_account.mint == global.usdc_mint
     )]
     pub caller_usdc_account: InterfaceAccount<'info, TokenAccount>,
@@ -74,8 +80,6 @@ pub struct TerminateIfInactive<'info> {
 
     pub token_program: Interface<'info, TokenInterface>,
 
-    /// Caller (anyone)
-    pub caller: Signer<'info>,
 }
 
 pub fn handler(ctx: Context<TerminateIfInactive>) -> Result<()> {
