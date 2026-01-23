@@ -62,4 +62,5 @@ test-usdc-config.json
 /*
 !contracts/
 !.gitignore
+!README.md
 EOF
