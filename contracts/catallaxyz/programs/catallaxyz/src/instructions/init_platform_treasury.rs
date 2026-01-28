@@ -46,9 +46,10 @@ pub fn handler(ctx: Context<InitPlatformTreasury>) -> Result<()> {
     let global = &mut ctx.accounts.global;
     
     // Verify USDC mint matches global
+    // AUDIT FIX: Use specific error type
     require!(
         ctx.accounts.usdc_mint.key() == global.usdc_mint,
-        crate::errors::TerminatorError::InvalidMarketType
+        crate::errors::TerminatorError::InvalidUsdcMint
     );
     
     // Store platform treasury bump

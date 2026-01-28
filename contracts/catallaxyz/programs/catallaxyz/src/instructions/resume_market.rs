@@ -36,7 +36,8 @@ pub struct ResumeMarket<'info> {
             market.market_id.as_ref(),
         ],
         bump = market.bump,
-        constraint = market.is_paused @ TerminatorError::InvalidMarketType,
+        // AUDIT FIX: Use specific error type
+        constraint = market.is_paused @ TerminatorError::MarketNotPaused,
     )]
     pub market: Account<'info, Market>,
 
@@ -47,8 +48,8 @@ pub fn handler(ctx: Context<ResumeMarket>) -> Result<()> {
     let market = &mut ctx.accounts.market;
     let clock = Clock::get()?;
 
-    // Resume the market
-    market.resume();
+    // Resume the market and reset activity time to prevent immediate inactivity termination
+    market.resume(clock.unix_timestamp, clock.slot);
 
     emit!(MarketResumed {
         market: market.key(),
@@ -58,6 +59,7 @@ pub fn handler(ctx: Context<ResumeMarket>) -> Result<()> {
 
     msg!("Market resumed by admin: {}", market.key());
     msg!("Resumed at: {}", clock.unix_timestamp);
+    msg!("Activity timestamp reset to prevent immediate inactivity termination");
     msg!("Trading and order placement are now enabled");
 
     Ok(())

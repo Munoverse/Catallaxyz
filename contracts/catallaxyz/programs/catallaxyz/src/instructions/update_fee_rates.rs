@@ -85,10 +85,12 @@ pub fn handler(ctx: Context<UpdateFeeRates>, params: UpdateFeeRatesParams) -> Re
     );
     
     // Validate fee distribution (must sum to 100%)
+    // AUDIT FIX v1.1.0: Use checked_add instead of saturating_add for clarity
     const RATE_SCALE: u32 = 1_000_000;
     let total_distribution = params.platform_fee_rate
-        .saturating_add(params.maker_rebate_rate)
-        .saturating_add(params.creator_incentive_rate);
+        .checked_add(params.maker_rebate_rate)
+        .and_then(|sum| sum.checked_add(params.creator_incentive_rate))
+        .ok_or(TerminatorError::ArithmeticOverflow)?;
     
     require!(
         total_distribution == RATE_SCALE,

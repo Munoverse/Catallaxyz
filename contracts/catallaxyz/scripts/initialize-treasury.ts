@@ -6,11 +6,11 @@ import * as fs from "fs";
 import type { Catallaxyz } from "../target/types/catallaxyz";
 
 /**
- * Initialize VRF Treasury
+ * Initialize Legacy VRF Treasury
  * 
  * This script will:
  * 1. Initialize the VRF treasury token account
- * 2. This account collects VRF-related fees
+ * 2. This account collects VRF-related fees only
  * 3. Owned by the global PDA
  * 
  * Prerequisites:

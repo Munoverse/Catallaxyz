@@ -1,8 +1,5 @@
 pub const GLOBAL_SEED: &str = "global";
 pub const MARKET_SEED: &str = "market";
-pub const YES_TOKEN_SEED: &str = "yes_token";
-pub const NO_TOKEN_SEED: &str = "no_token";
-pub const OUTCOME_TOKEN_SEED: &str = "outcome_token";
 pub const TREASURY_SEED: &str = "treasury"; // VRF treasury (for Switchboard VRF fees)
 pub const PLATFORM_TREASURY_SEED: &str = "platform_treasury"; // Platform treasury (for trading fees & market creation fees)
 pub const REWARD_TREASURY_SEED: &str = "reward_treasury"; // Rewards treasury (for liquidity rewards)
@@ -17,6 +14,14 @@ pub const OUTCOME_NO: u8 = 1;
 // Fixed to 2 outcomes (YES/NO) for simplified implementation
 pub const MAX_OUTCOME_TOKENS: usize = 2; // Binary markets always have 2 outcomes (YES and NO)
 pub const PRICE_SCALE: u64 = 1_000_000; // Price precision (10^6)
+
+/// Price tolerance for validation (0.01% at 10^6 scale)
+pub const PRICE_TOLERANCE: u64 = 100;
+
+// Market metadata limits (bytes, UTF-8)
+pub const MAX_QUESTION_LEN: usize = 200;
+pub const MAX_DESCRIPTION_LEN: usize = 500;
+pub const MAX_OUTCOME_DESCRIPTION_LEN: usize = 200;
 
 // ============================================
 // VRF Termination Constants (Updated 2026-01-10 - User opt-in mechanism)

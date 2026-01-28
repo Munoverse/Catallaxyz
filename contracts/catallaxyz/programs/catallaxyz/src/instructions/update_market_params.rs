@@ -34,7 +34,10 @@ pub struct UpdateMarketParamsAccounts<'info> {
     pub global: Account<'info, Global>,
 
     /// Market to update
-    #[account(mut)]
+    #[account(
+        mut,
+        constraint = market.global == global.key() @ TerminatorError::InvalidAccountInput
+    )]
     pub market: Account<'info, Market>,
 
     pub system_program: Program<'info, System>,

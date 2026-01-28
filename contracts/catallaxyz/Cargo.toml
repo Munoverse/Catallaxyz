@@ -8,8 +8,8 @@ resolver = "2"
 overflow-checks = true
 lto = "fat"
 codegen-units = 1
-opt-level = "z"  # 优化大小而非速度
-strip = true     # 移除符号表
+opt-level = "z"  # Optimize for size over speed
+strip = true     # Strip symbols
 
 [profile.release.build-override]
 opt-level = 3

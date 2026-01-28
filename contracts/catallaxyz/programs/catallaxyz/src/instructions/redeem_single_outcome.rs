@@ -1,9 +1,9 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{self as token_interface, TokenInterface, TokenAccount, Mint, TransferChecked};
-use crate::constants::{MARKET_SEED, PRICE_SCALE};
-use crate::states::{Market, UserPosition};
-use crate::states::market::market_status;
+use crate::constants::{GLOBAL_SEED, MARKET_SEED, PRICE_SCALE};
+use crate::states::{Global, Market, UserPosition};
 use crate::errors::TerminatorError;
+use crate::events::CtfTokensRedeemed;
 
 #[derive(AnchorSerialize, AnchorDeserialize, Clone)]
 pub struct RedeemSingleOutcomeParams {
@@ -11,21 +11,29 @@ pub struct RedeemSingleOutcomeParams {
     pub question_index: u8,
     /// Outcome type: 0 = YES, 1 = NO
     pub outcome_type: u8,
-    /// Amount of outcome tokens to redeem
+    /// Amount of outcome positions to redeem
     pub token_amount: u64,
 }
 
-/// Redeem single outcome tokens after market settlement/termination
-/// After market settlement or termination, users can redeem single outcome tokens at final price
+/// Redeem single outcome positions after market settlement/termination
+/// After market settlement or termination, users can redeem single outcome positions at final price
 /// Example: If NO price is 0.2 at termination, YES price is 0.8
-///          User can redeem 1 YES token for 0.8 USDC
-///          User can redeem 1 NO token for 0.2 USDC
+///          User can redeem 1 YES position for 0.8 USDC
+///          User can redeem 1 NO position for 0.2 USDC
 #[derive(Accounts)]
 #[instruction(params: RedeemSingleOutcomeParams)]
 pub struct RedeemSingleOutcome<'info> {
+    /// Global account (for validation)
+    #[account(
+        seeds = [GLOBAL_SEED.as_bytes()],
+        bump = global.bump,
+    )]
+    pub global: Account<'info, Global>,
+
     #[account(
         mut,
         constraint = market.can_redeem @ TerminatorError::RedemptionNotAllowed,
+        constraint = market.global == global.key() @ TerminatorError::InvalidGlobalAccount,
     )]
     pub market: Account<'info, Market>,
 
@@ -50,7 +58,12 @@ pub struct RedeemSingleOutcome<'info> {
     pub market_vault: InterfaceAccount<'info, TokenAccount>,
 
     /// User's USDC account to receive redemption
-    #[account(mut)]
+    #[account(
+        mut,
+        // Validate user owns this token account and it's the correct mint
+        constraint = user_usdc_account.owner == user.key() @ TerminatorError::Unauthorized,
+        constraint = user_usdc_account.mint == global.usdc_mint @ TerminatorError::InvalidTokenMint,
+    )]
     pub user_usdc_account: InterfaceAccount<'info, TokenAccount>,
     
     /// USDC mint account
@@ -66,11 +79,6 @@ pub struct RedeemSingleOutcome<'info> {
 
 pub fn handler(ctx: Context<RedeemSingleOutcome>, params: RedeemSingleOutcomeParams) -> Result<()> {
     let market = &mut ctx.accounts.market;
-
-    require!(
-        market.is_randomly_terminated || market.status == market_status::SETTLED || market.status == market_status::TERMINATED,
-        TerminatorError::MarketNotTerminated
-    );
 
     // Validate outcome_type
     require!(
@@ -163,13 +171,24 @@ pub fn handler(ctx: Context<RedeemSingleOutcome>, params: RedeemSingleOutcomePar
     );
     token_interface::transfer_checked(transfer_ctx, usdc_amount, 6)?;
 
+    // Reload vault account after CPI to get fresh balance
+    ctx.accounts.market_vault.reload()?;
     require!(
-        ctx.accounts.market_vault.amount == market.total_position_collateral,
+        ctx.accounts.market_vault.amount >= market.total_position_collateral,
         TerminatorError::InsufficientVaultBalance
     );
 
+    emit!(CtfTokensRedeemed {
+        market: market.key(),
+        user: ctx.accounts.user.key(),
+        winning_outcome: params.outcome_type,
+        token_amount: params.token_amount,
+        reward_amount: usdc_amount,
+        timestamp: Clock::get()?.unix_timestamp,
+    });
+
     msg!(
-        "Redeemed {} {} tokens for {} USDC (price: {})",
+        "Redeemed {} {} positions for {} USDC (price: {})",
         params.token_amount,
         if params.outcome_type == 0 { "YES" } else { "NO" },
         usdc_amount,

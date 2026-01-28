@@ -1,86 +1,33 @@
-import * as anchor from "@coral-xyz/anchor";
-import { Program } from "@coral-xyz/anchor";
-import { Connection, PublicKey } from "@solana/web3.js";
-import { getAssociatedTokenAddressSync, TOKEN_PROGRAM_ID } from "@solana/spl-token";
-import * as fs from "fs";
-import * as path from "path";
-import type { Catallaxyz } from "../target/types/catallaxyz";
+import {
+  deriveGlobalPda,
+  executeTermination,
+  getProgram,
+  parsePublicKey,
+  readTerminationLog,
+  writeTerminationLog,
+} from "./utils/termination";
+import { createLogger } from "./utils/logger";
+import { TerminationReason } from "../shared/types";
 
-type TerminationLogEntry = {
-  market: string;
-  tx: string;
-  terminatedAt: string;
-  executor: string;
-  reason: "inactivity";
-};
-
-const LOG_PATH = path.resolve("backend/db/termination_log.json");
-
-const loadIdl = () => {
-  const idlPath = path.resolve("target/idl/catallaxyz.json");
-  if (!fs.existsSync(idlPath)) {
-    throw new Error("IDL not found. Run: anchor build");
-  }
-  return JSON.parse(fs.readFileSync(idlPath, "utf8"));
-};
-
-const readLog = (): TerminationLogEntry[] => {
-  if (!fs.existsSync(LOG_PATH)) {
-    return [];
-  }
-  const raw = fs.readFileSync(LOG_PATH, "utf8").trim();
-  if (!raw) {
-    return [];
-  }
-  return JSON.parse(raw) as TerminationLogEntry[];
-};
-
-const writeLog = (entries: TerminationLogEntry[]) => {
-  fs.mkdirSync(path.dirname(LOG_PATH), { recursive: true });
-  fs.writeFileSync(LOG_PATH, JSON.stringify(entries, null, 2));
-};
+// AUDIT FIX v1.1.0: Use structured logging
+const logger = createLogger('terminate-inactive');
 
 async function main() {
+  // AUDIT FIX v1.2.0: Validate MARKET_PUBKEY before use
   const marketKey = process.env.MARKET_PUBKEY;
   if (!marketKey) {
-    throw new Error("Missing env MARKET_PUBKEY");
+    throw new Error('MARKET_PUBKEY environment variable is required');
+  }
+  if (marketKey.length < 32 || marketKey.length > 44) {
+    throw new Error('MARKET_PUBKEY appears to be invalid (wrong length)');
   }
 
-  const connection = new Connection(
-    process.env.ANCHOR_PROVIDER_URL || "https://api.devnet.solana.com",
-    "confirmed"
-  );
+  const { program, programId, provider } = getProgram();
 
-  const provider = anchor.AnchorProvider.env();
-  anchor.setProvider(provider);
+  const market = parsePublicKey(marketKey, "MARKET_PUBKEY");
+  const globalPda = deriveGlobalPda(programId);
 
-  const idl = loadIdl();
-  const programId = new PublicKey(idl.address);
-  const program = new Program(idl, provider) as Program<Catallaxyz>;
-
-  const market = new PublicKey(marketKey);
-
-  const [global] = PublicKey.findProgramAddressSync(
-    [Buffer.from("global")],
-    programId
-  );
-
-  const [marketUsdcVault] = PublicKey.findProgramAddressSync(
-    [Buffer.from("market_vault"), market.toBuffer()],
-    programId
-  );
-
-  const [platformTreasury] = PublicKey.findProgramAddressSync(
-    [Buffer.from("platform_treasury")],
-    programId
-  );
-
-  const [creatorTreasury] = PublicKey.findProgramAddressSync(
-    [Buffer.from("creator_treasury")],
-    programId
-  );
-
-  const globalAccount = await program.account.global.fetch(global);
+  const globalAccount = await program.account.global.fetch(globalPda);
   const marketAccount = await program.account.market.fetch(market);
 
   const authority = provider.wallet.publicKey;
@@ -88,53 +35,37 @@ async function main() {
     throw new Error("Unauthorized: wallet is not global authority");
   }
 
-  const usdcMint = globalAccount.usdcMint as PublicKey;
-  const creator = marketAccount.creator as PublicKey;
+  logger.info("Terminating inactive market", {
+    market: market.toString(),
+    authority: authority.toString(),
+  });
 
-  const creatorUsdcAccount = process.env.CREATOR_USDC_ACCOUNT
-    ? new PublicKey(process.env.CREATOR_USDC_ACCOUNT)
-    : getAssociatedTokenAddressSync(usdcMint, creator, false, TOKEN_PROGRAM_ID);
+  const tx = await executeTermination({
+    program,
+    programId,
+    market,
+    globalPda,
+    globalAccount,
+    authority,
+    marketAccount,
+  });
 
-  const adminUsdcAccount = process.env.ADMIN_USDC_ACCOUNT
-    ? new PublicKey(process.env.ADMIN_USDC_ACCOUNT)
-    : getAssociatedTokenAddressSync(usdcMint, authority, false, TOKEN_PROGRAM_ID);
+  logger.info("Termination successful", { market: market.toString(), tx });
 
-  console.log("🚨 Terminate inactive market");
-  console.log("  Market:", market.toString());
-  console.log("  Authority:", authority.toString());
-
-  const tx = await program.methods
-    .terminateIfInactive()
-    .accounts({
-      global,
-      authority,
-      market,
-      marketUsdcVault,
-      platformTreasury,
-      creatorTreasury,
-      creatorUsdcAccount,
-      callerUsdcAccount: adminUsdcAccount,
-      usdcMint,
-      tokenProgram: TOKEN_PROGRAM_ID,
-    })
-    .rpc();
-
-  console.log("✅ Transaction:", tx);
-
-  const entries = readLog();
+  const entries = readTerminationLog();
   entries.push({
     market: market.toString(),
     tx,
     terminatedAt: new Date().toISOString(),
     executor: authority.toString(),
-    reason: "inactivity",
+    reason: TerminationReason.Inactivity,
   });
-  writeLog(entries);
+  writeTerminationLog(entries);
 }
 
 main()
   .then(() => process.exit(0))
   .catch((err) => {
-    console.error("❌ Termination failed:", err);
+    logger.error("Termination failed", err);
     process.exit(1);
   });

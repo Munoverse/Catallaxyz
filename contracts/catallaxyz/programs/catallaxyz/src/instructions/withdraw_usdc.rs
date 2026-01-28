@@ -48,7 +48,12 @@ pub struct WithdrawUsdc<'info> {
     )]
     pub market_usdc_vault: InterfaceAccount<'info, TokenAccount>,
 
-    #[account(mut)]
+    #[account(
+        mut,
+        // Validate user owns this token account and it's the correct mint
+        constraint = user_usdc_account.owner == user.key() @ TerminatorError::Unauthorized,
+        constraint = user_usdc_account.mint == global.usdc_mint @ TerminatorError::InvalidTokenMint,
+    )]
     pub user_usdc_account: InterfaceAccount<'info, TokenAccount>,
 
     pub usdc_mint: InterfaceAccount<'info, Mint>,
@@ -62,6 +67,13 @@ pub fn handler(ctx: Context<WithdrawUsdc>, params: WithdrawUsdcParams) -> Result
     require!(ctx.accounts.user_balance.usdc_balance >= params.amount, TerminatorError::InsufficientBalance);
 
     let market = &ctx.accounts.market;
+    
+    // AUDIT FIX v1.2.5: Check market status - allow withdrawal in active or redeemable markets only
+    // This prevents withdrawals from paused markets (admin intervention)
+    require!(
+        market.can_trade() || market.can_redeem,
+        TerminatorError::MarketNotActive
+    );
     let market_seeds = &[
         MARKET_SEED.as_bytes(),
         market.creator.as_ref(),
@@ -81,6 +93,8 @@ pub fn handler(ctx: Context<WithdrawUsdc>, params: WithdrawUsdcParams) -> Result
         signer_seeds,
     );
     token_interface::transfer_checked(transfer_ctx, params.amount, 6)?;
+    // AUDIT FIX v1.2.0: Reload vault after CPI to ensure data consistency
+    ctx.accounts.market_usdc_vault.reload()?;
 
     ctx.accounts.user_balance.usdc_balance = ctx.accounts.user_balance.usdc_balance
         .checked_sub(params.amount)

@@ -17,6 +17,25 @@ pub enum TerminatorError {
     #[msg("Invalid market type")]
     InvalidMarketType,
 
+    // ============================================
+    // AUDIT FIX: Specific Market State Errors
+    // ============================================
+    
+    #[msg("Market is paused")]
+    MarketPaused,
+    
+    #[msg("Market is not paused")]
+    MarketNotPaused,
+    
+    #[msg("Missing reference agent")]
+    MissingReferenceAgent,
+    
+    #[msg("Missing last trade outcome")]
+    MissingLastTradeOutcome,
+    
+    #[msg("Invalid USDC mint")]
+    InvalidUsdcMint,
+
     #[msg("Maximum settlements reached")]
     MaxSettlementsReached,
 
@@ -87,21 +106,11 @@ pub enum TerminatorError {
     #[msg("Not a binary market")]
     NotBinaryMarket,
 
-    #[msg("Insufficient outcome tokens")]
+    #[msg("Insufficient outcome positions")]
     InsufficientOutcomeTokens,
 
     #[msg("Invalid outcome index")]
     InvalidOutcomeIndex,
-    
-    // ============================================
-    // Manifest CLOB Integration Errors
-    // ============================================
-    
-    #[msg("Invalid Manifest market")]
-    InvalidManifestMarket,
-    
-    #[msg("Manifest CPI call failed")]
-    ManifestCpiFailed,
     
     #[msg("Invalid mint")]
     InvalidMint,
@@ -124,9 +133,6 @@ pub enum TerminatorError {
     #[msg("No convertible positions")]
     NoConvertiblePositions,
 
-    #[msg("Instruction is deprecated")]
-    DeprecatedInstruction,
-    
     // ============================================
     // Random Termination & Redemption Errors
     // ============================================
@@ -140,19 +146,20 @@ pub enum TerminatorError {
     #[msg("Redemption not allowed")]
     RedemptionNotAllowed,
     
-    #[msg("Insufficient outcome tokens for redemption")]
+    #[msg("Insufficient outcome positions for redemption")]
     InsufficientOutcomeTokensForRedemption,
     
     // ============================================
-    // Fee & Insurance Fund Errors
+    // Fee Errors
     // ============================================
     
     #[msg("Invalid fee rate configuration")]
     InvalidFeeConfiguration,
     
-    #[msg("Insurance fund insufficient")]
-    InsufficientInsuranceFund,
+    // ============================================
+    // Account Validation Errors
+    // ============================================
     
-    #[msg("ADL (Auto-Deleveraging) triggered")]
-    AdlTriggered,
+    #[msg("Invalid global account")]
+    InvalidGlobalAccount,
 }

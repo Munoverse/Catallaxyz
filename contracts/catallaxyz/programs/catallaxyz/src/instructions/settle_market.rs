@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{self as token_interface, TokenAccount, TokenInterface, TransferChecked};
-use crate::constants::{GLOBAL_SEED, OUTCOME_YES, OUTCOME_NO, CREATOR_TREASURY_SEED, PRICE_SCALE};
+use crate::constants::{GLOBAL_SEED, OUTCOME_YES, OUTCOME_NO, CREATOR_TREASURY_SEED};
 use crate::errors::TerminatorError;
 use crate::events::MarketSettled;
 use crate::states::{global::Global, market::Market};
@@ -10,7 +10,10 @@ use crate::states::{global::Global, market::Market};
 /// Losing positions become worthless
 #[derive(Accounts)]
 pub struct SettleMarket<'info> {
-    #[account(mut)]
+    #[account(
+        mut,
+        constraint = authority.key() == global.authority @ TerminatorError::Unauthorized
+    )]
     pub authority: Signer<'info>,
 
     #[account(
@@ -22,14 +25,16 @@ pub struct SettleMarket<'info> {
     #[account(
         mut,
         constraint = market.is_active() @ TerminatorError::MarketAlreadySettled,
-        constraint = market.reference_agent.is_some() @ TerminatorError::InvalidMarketType,
-        constraint = market.last_trade_outcome.is_some() @ TerminatorError::InvalidMarketType
+        // AUDIT FIX: Use specific error types
+        constraint = market.reference_agent.is_some() @ TerminatorError::MissingReferenceAgent,
+        constraint = market.last_trade_outcome.is_some() @ TerminatorError::MissingLastTradeOutcome
     )]
     pub market: Account<'info, Market>,
 
     #[account(
         mut,
-        constraint = market_usdc_vault.mint == global.usdc_mint @ TerminatorError::InvalidMarketType,
+        // AUDIT FIX: Use specific error type for USDC mint validation
+        constraint = market_usdc_vault.mint == global.usdc_mint @ TerminatorError::InvalidUsdcMint,
         constraint = market_usdc_vault.owner == market.key() @ TerminatorError::Unauthorized
     )]
     pub market_usdc_vault: InterfaceAccount<'info, TokenAccount>,
@@ -71,8 +76,9 @@ pub fn handler(ctx: Context<SettleMarket>) -> Result<()> {
     // Determine outcome based on last trade
     // If reference agent sold NO (outcome = OUTCOME_NO), then YES wins
     // If reference agent sold YES (outcome = OUTCOME_YES), then NO wins
+    // AUDIT FIX: Use specific error type
     let last_trade_outcome = market.last_trade_outcome
-        .ok_or(TerminatorError::InvalidMarketType)?;
+        .ok_or(TerminatorError::MissingLastTradeOutcome)?;
     let winning_outcome = if last_trade_outcome == OUTCOME_NO {
         OUTCOME_YES // Reference agent sold NO, so YES wins
     } else {
@@ -97,18 +103,17 @@ pub fn handler(ctx: Context<SettleMarket>) -> Result<()> {
     );
 
     // Set final prices based on last observed trade prices (fallback to 0.5)
-    let yes_price = match (market.last_trade_yes_price, market.last_trade_no_price) {
-        (Some(yes), _) => yes.min(PRICE_SCALE),
-        (None, Some(no)) => PRICE_SCALE.saturating_sub(no.min(PRICE_SCALE)),
-        (None, None) => PRICE_SCALE / 2,
-    };
-    let no_price = PRICE_SCALE.saturating_sub(yes_price);
+    let (yes_price, no_price) = crate::utils::derive_final_prices(
+        market.last_trade_yes_price,
+        market.last_trade_no_price,
+    );
     market.final_yes_price = Some(yes_price);
     market.final_no_price = Some(no_price);
     market.can_redeem = true;
 
+    // AUDIT FIX v1.2.2: Use method instead of direct assignment
     // Mark market as settled (status change from Active to Settled)
-    market.status = 1;
+    market.set_settled();
     market.total_redeemable_usdc = vault_balance;
     market.total_redeemed_usdc = 0;
 
@@ -135,6 +140,9 @@ pub fn handler(ctx: Context<SettleMarket>) -> Result<()> {
             );
 
             token_interface::transfer_checked(transfer_ctx, accrued, 6)?;
+            // AUDIT FIX: Reload accounts after CPI to ensure data consistency
+            ctx.accounts.creator_treasury.reload()?;
+            ctx.accounts.creator_usdc_account.reload()?;
             market.creator_incentive_accrued = 0;
         } else {
             msg!("Creator treasury balance insufficient; skipping creator payout");
@@ -150,8 +158,9 @@ pub fn handler(ctx: Context<SettleMarket>) -> Result<()> {
         market: market.key(),
         settlement_index: 0, // All markets settle once at index 0
         winning_outcome,
+        // AUDIT FIX: Use specific error type
         reference_agent: market.reference_agent
-            .ok_or(TerminatorError::InvalidMarketType)?,
+            .ok_or(TerminatorError::MissingReferenceAgent)?,
         vault_balance,
         total_rewards: vault_balance, // All vault balance goes to winners
         timestamp: clock.unix_timestamp,

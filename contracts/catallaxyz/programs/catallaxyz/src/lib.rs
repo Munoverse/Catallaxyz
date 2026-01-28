@@ -6,6 +6,7 @@ pub mod events;
 pub mod instructions;
 pub mod states;
 pub mod switchboard_lite;
+pub mod utils;
 
 // Import all instruction types (Context structs and params)
 // The ambiguous glob re-exports warning is acceptable since each handler
@@ -13,7 +14,7 @@ pub mod switchboard_lite;
 #[allow(ambiguous_glob_reexports)]
 use instructions::*;
 
-declare_id!("95QAsSGtGqRPKVWrxEj9GnJcSfWnhxRdYdbeVq5WTEcy");
+declare_id!("FYs6iC1M84eiMZRe45uwmBt7PnZCMnG1XSjC1tgTy2kk");
 
 #[program]
 pub mod catallaxyz {
@@ -24,7 +25,7 @@ pub mod catallaxyz {
         instructions::initialize::handler(ctx, params)
     }
 
-    /// Initialize the official treasury for collecting fees
+    /// Initialize the legacy VRF treasury (Switchboard fees only)
     pub fn init_treasury(ctx: Context<InitTreasury>) -> Result<()> {
         instructions::init_treasury::handler(ctx)
     }
@@ -52,9 +53,9 @@ pub mod catallaxyz {
         instructions::init_market_vault::handler(ctx)
     }
 
-    // Binary market operations: split/merge USDC <-> YES+NO tokens
+    // Binary market operations: split/merge USDC <-> YES+NO positions
 
-    /// Redeem single outcome token after settlement or termination
+    /// Redeem single outcome position after settlement or termination
     pub fn redeem_single_outcome(
         ctx: Context<RedeemSingleOutcome>,
         params: RedeemSingleOutcomeParams,
@@ -82,8 +83,8 @@ pub mod catallaxyz {
         instructions::terminate_if_inactive::handler(ctx)
     }
 
-    /// Split USDC into YES and NO tokens for a SINGLE question
-    /// Split 1 USDC into 1 YES + 1 NO token
+    /// Split USDC into YES and NO positions for a SINGLE question
+    /// Split 1 USDC into 1 YES + 1 NO position
     pub fn split_position_single(
         ctx: Context<SplitPositionSingle>,
         params: SplitPositionSingleParams,
@@ -91,8 +92,8 @@ pub mod catallaxyz {
         instructions::split_position_single::handler(ctx, params)
     }
 
-    /// Merge YES and NO tokens back to USDC for a SINGLE question
-    /// Merge 1 YES + 1 NO token back into 1 USDC
+    /// Merge YES and NO positions back to USDC for a SINGLE question
+    /// Merge 1 YES + 1 NO position back into 1 USDC
     pub fn merge_position_single(
         ctx: Context<MergePositionSingle>,
         params: MergePositionSingleParams,

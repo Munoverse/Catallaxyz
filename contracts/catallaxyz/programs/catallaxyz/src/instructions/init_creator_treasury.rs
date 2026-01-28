@@ -43,9 +43,10 @@ pub struct InitCreatorTreasury<'info> {
 pub fn handler(ctx: Context<InitCreatorTreasury>) -> Result<()> {
     let global = &ctx.accounts.global;
 
+    // AUDIT FIX: Use specific error type
     require!(
         ctx.accounts.usdc_mint.key() == global.usdc_mint,
-        crate::errors::TerminatorError::InvalidMarketType
+        crate::errors::TerminatorError::InvalidUsdcMint
     );
 
     msg!("Creator treasury initialized: {}", ctx.accounts.creator_treasury.key());

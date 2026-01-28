@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{self as token_interface, TokenAccount, TokenInterface, TransferChecked};
-use crate::constants::{GLOBAL_SEED, CREATOR_TREASURY_SEED, PRICE_SCALE};
+use crate::constants::{GLOBAL_SEED, CREATOR_TREASURY_SEED};
 use crate::switchboard_lite::{RandomnessAccountData, SWITCHBOARD_PROGRAM_ID};
 use crate::states::{global::Global, Market};
 use crate::errors::TerminatorError;
@@ -35,14 +35,15 @@ pub struct SettleWithRandomness<'info> {
         seeds = [GLOBAL_SEED.as_bytes()],
         bump = global.bump
     )]
-    pub global: Account<'info, Global>,
+    pub global: Box<Account<'info, Global>>,
 
     #[account(
         mut,
         constraint = market.is_active() @ TerminatorError::MarketNotActive,
-        constraint = market.reference_agent.is_some() @ TerminatorError::InvalidMarketType,
+        // AUDIT FIX: Use specific error type
+        constraint = market.reference_agent.is_some() @ TerminatorError::MissingReferenceAgent,
     )]
-    pub market: Account<'info, Market>,
+    pub market: Box<Account<'info, Market>>,
 
     /// Creator treasury (holds creator incentives)
     #[account(
@@ -51,7 +52,7 @@ pub struct SettleWithRandomness<'info> {
         bump,
         constraint = creator_treasury.owner == global.key() @ TerminatorError::InvalidTokenAccountOwner
     )]
-    pub creator_treasury: InterfaceAccount<'info, TokenAccount>,
+    pub creator_treasury: Box<InterfaceAccount<'info, TokenAccount>>,
 
     /// Creator USDC account (receives incentive payout)
     #[account(
@@ -59,10 +60,10 @@ pub struct SettleWithRandomness<'info> {
         constraint = creator_usdc_account.owner == market.creator @ TerminatorError::InvalidTokenAccountOwner,
         constraint = creator_usdc_account.mint == global.usdc_mint @ TerminatorError::InvalidMint
     )]
-    pub creator_usdc_account: InterfaceAccount<'info, TokenAccount>,
+    pub creator_usdc_account: Box<InterfaceAccount<'info, TokenAccount>>,
 
     /// USDC mint account
-    pub usdc_mint: InterfaceAccount<'info, token_interface::Mint>,
+    pub usdc_mint: Box<InterfaceAccount<'info, token_interface::Mint>>,
 
     /// Market USDC vault (backing YES/NO positions)
     #[account(
@@ -72,7 +73,7 @@ pub struct SettleWithRandomness<'info> {
         constraint = market_usdc_vault.mint == global.usdc_mint @ TerminatorError::InvalidTokenMint,
         constraint = market_usdc_vault.owner == market.key() @ TerminatorError::Unauthorized
     )]
-    pub market_usdc_vault: InterfaceAccount<'info, TokenAccount>,
+    pub market_usdc_vault: Box<InterfaceAccount<'info, TokenAccount>>,
 
     /// Switchboard randomness account
     /// CHECK: Validated by Switchboard program
@@ -95,6 +96,7 @@ pub struct SettleWithRandomness<'info> {
 }
 
 pub fn handler(ctx: Context<SettleWithRandomness>, params: SettleWithRandomnessParams) -> Result<()> {
+    let market_key = ctx.accounts.market.key();
     let market = &mut ctx.accounts.market;
     let clock = Clock::get()?;
 
@@ -102,6 +104,11 @@ pub fn handler(ctx: Context<SettleWithRandomness>, params: SettleWithRandomnessP
     // If user did not opt-in, return early without calling VRF
     if !params.user_opted_termination_check {
         msg!("User did not opt for termination check - skipping VRF");
+        return Ok(());
+    }
+
+    if !market.random_termination_enabled {
+        msg!("Random termination disabled - skipping VRF");
         return Ok(());
     }
 
@@ -124,23 +131,22 @@ pub fn handler(ctx: Context<SettleWithRandomness>, params: SettleWithRandomnessP
         TerminatorError::MarketTerminated
     );
 
-    // Validate threshold (0.1% = 100,000 in 0-100,000,000 scale)
+    // Validate threshold against on-chain market settings (0-100,000,000 scale)
+    // AUDIT FIX v1.1.0: Use checked_mul instead of saturating_mul for safety
+    let expected_threshold = (market.termination_probability as u64)
+        .checked_mul(100)
+        .ok_or(TerminatorError::ArithmeticOverflow)?;
     require!(
-        params.settlement_threshold > 0 && params.settlement_threshold <= 100_000_000,
+        expected_threshold <= 100_000_000,
+        TerminatorError::InvalidInput
+    );
+    require!(
+        params.settlement_threshold == expected_threshold,
         TerminatorError::InvalidInput
     );
 
     // Validate prices (YES + NO should equal 1.0)
-    let price_sum = params.last_trade_yes_price
-        .checked_add(params.last_trade_no_price)
-        .ok_or(TerminatorError::ArithmeticOverflow)?;
-    
-    const PRICE_TOLERANCE: u64 = 100; // 0.01% tolerance (1e6 scale)
-    require!(
-        price_sum >= PRICE_SCALE.saturating_sub(PRICE_TOLERANCE)
-            && price_sum <= PRICE_SCALE.saturating_add(PRICE_TOLERANCE),
-        TerminatorError::InvalidInput
-    );
+    crate::utils::validate_price_sum(params.last_trade_yes_price, params.last_trade_no_price)?;
 
     // Best-effort sanity: if we have recorded last prices, require params to match closely
     if let (Some(yes), Some(no)) = (market.last_trade_yes_price, market.last_trade_no_price) {
@@ -219,11 +225,13 @@ pub fn handler(ctx: Context<SettleWithRandomness>, params: SettleWithRandomnessP
     // 3. Users trade in rapid succession
     
     // Increment trade nonce to ensure uniqueness
-    let nonce = market.increment_trade_nonce();
+    // AUDIT FIX v1.2.0: Handle Result from increment_trade_nonce
+    let nonce = market.increment_trade_nonce()?;
     
     // Derive unique randomness for this specific trade
     let unique_randomness = market.derive_unique_randomness(
         &vrf_value,
+        &market_key,
         &ctx.accounts.caller.key(),
         clock.slot,
     );
@@ -275,6 +283,9 @@ pub fn handler(ctx: Context<SettleWithRandomness>, params: SettleWithRandomnessP
             params.last_trade_slot,
         )?;
 
+        // Reload vault account to get fresh balance before setting redeemable amount
+        ctx.accounts.market_usdc_vault.reload()?;
+        
         // Lock total redeemable USDC for redemption tracking
         market.total_redeemable_usdc = ctx.accounts.market_usdc_vault.amount;
         market.total_redeemed_usdc = 0;
@@ -301,7 +312,11 @@ pub fn handler(ctx: Context<SettleWithRandomness>, params: SettleWithRandomnessP
                     signer_seeds_array,
                 );
 
-                token_interface::transfer_checked(transfer_ctx, accrued, 6)?;
+                let decimals = ctx.accounts.usdc_mint.decimals;
+                token_interface::transfer_checked(transfer_ctx, accrued, decimals)?;
+                // AUDIT FIX: Reload accounts after CPI to ensure data consistency
+                ctx.accounts.creator_treasury.reload()?;
+                ctx.accounts.creator_usdc_account.reload()?;
                 market.creator_incentive_accrued = 0;
             } else {
                 msg!("Creator treasury balance insufficient; skipping creator payout");
@@ -309,8 +324,9 @@ pub fn handler(ctx: Context<SettleWithRandomness>, params: SettleWithRandomnessP
         }
 
         // Determine winning outcome for event (based on last trade)
+        // AUDIT FIX: Use specific error type
         let winning_outcome = market.last_trade_outcome
-            .ok_or(TerminatorError::InvalidMarketType)?;
+            .ok_or(TerminatorError::MissingLastTradeOutcome)?;
 
         // Emit settlement event
         let vault_balance = ctx.accounts.market_usdc_vault.amount;
@@ -318,8 +334,9 @@ pub fn handler(ctx: Context<SettleWithRandomness>, params: SettleWithRandomnessP
             market: market.key(),
             settlement_index: 0, // All markets settle once at index 0
             winning_outcome,
+            // AUDIT FIX: Use specific error type
             reference_agent: market.reference_agent
-                .ok_or(TerminatorError::InvalidMarketType)?,
+                .ok_or(TerminatorError::MissingReferenceAgent)?,
             vault_balance,
             total_rewards: vault_balance,
             timestamp: clock.unix_timestamp,

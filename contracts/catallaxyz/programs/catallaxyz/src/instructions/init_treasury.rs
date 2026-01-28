@@ -4,6 +4,7 @@ use crate::constants::{GLOBAL_SEED, TREASURY_SEED};
 use crate::states::global::Global;
 
 #[derive(Accounts)]
+/// Legacy VRF treasury initializer (Switchboard fees only).
 pub struct InitTreasury<'info> {
     #[account(mut)]
     pub authority: Signer<'info>,
@@ -38,15 +39,16 @@ pub fn handler(ctx: Context<InitTreasury>) -> Result<()> {
     let global = &mut ctx.accounts.global;
     
     // Verify USDC mint matches global
+    // AUDIT FIX: Use specific error type
     require!(
         ctx.accounts.usdc_mint.key() == global.usdc_mint,
-        crate::errors::TerminatorError::InvalidMarketType
+        crate::errors::TerminatorError::InvalidUsdcMint
     );
     
     // Store treasury bump
     global.treasury_bump = ctx.bumps.treasury;
     
-    msg!("Official treasury initialized: {}", ctx.accounts.treasury.key());
+    msg!("Legacy VRF treasury initialized: {}", ctx.accounts.treasury.key());
     
     Ok(())
 }

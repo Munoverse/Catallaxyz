@@ -92,6 +92,9 @@ pub fn handler(ctx: Context<WithdrawPlatformFees>, params: WithdrawPlatformFeesP
         signer_seeds,
     );
     token_interface::transfer_checked(transfer_ctx, params.amount, 6)?;
+    // AUDIT FIX: Reload accounts after CPI to ensure data consistency for logging
+    ctx.accounts.platform_treasury.reload()?;
+    ctx.accounts.recipient_usdc_account.reload()?;
 
     emit!(PlatformFeesWithdrawn {
         recipient: ctx.accounts.recipient_usdc_account.owner,
@@ -104,7 +107,7 @@ pub fn handler(ctx: Context<WithdrawPlatformFees>, params: WithdrawPlatformFeesP
     msg!("Amount: {} USDC", params.amount as f64 / 1_000_000.0);
     msg!("Recipient: {}", ctx.accounts.recipient_usdc_account.owner);
     msg!("Remaining treasury balance: {} USDC", 
-        (ctx.accounts.platform_treasury.amount - params.amount) as f64 / 1_000_000.0);
+        ctx.accounts.platform_treasury.amount as f64 / 1_000_000.0);
 
     Ok(())
 }

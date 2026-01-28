@@ -1,6 +1,9 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{self as token_interface, Mint, TokenAccount, TokenInterface, TransferChecked};
-use crate::constants::{GLOBAL_SEED, MARKET_SEED, PLATFORM_TREASURY_SEED, MARKET_CREATION_FEE, DEFAULT_TERMINATION_PROBABILITY};
+use crate::constants::{
+    DEFAULT_TERMINATION_PROBABILITY, GLOBAL_SEED, MARKET_CREATION_FEE, MARKET_SEED,
+    MAX_DESCRIPTION_LEN, MAX_OUTCOME_DESCRIPTION_LEN, MAX_QUESTION_LEN, PLATFORM_TREASURY_SEED,
+};
 use crate::errors::TerminatorError;
 use crate::switchboard_lite::{RandomnessAccountData, SWITCHBOARD_PROGRAM_ID};
 use crate::events::{MarketCreated, MarketCreationFeeCollected};
@@ -9,6 +12,9 @@ use crate::states::{global::Global, market::Market};
 #[derive(AnchorSerialize, AnchorDeserialize)]
 pub struct CreateMarketParams {
     pub question: String,
+    pub description: String,
+    pub yes_description: String,
+    pub no_description: String,
     /// Unique market identifier (per creator)
     pub market_id: [u8; 32],
 }
@@ -72,6 +78,23 @@ pub fn handler(ctx: Context<CreateMarket>, params: CreateMarketParams) -> Result
     let market = &mut ctx.accounts.market;
     let global = &mut ctx.accounts.global;
 
+    require!(
+        params.question.len() <= MAX_QUESTION_LEN,
+        TerminatorError::InvalidInput
+    );
+    require!(
+        params.description.len() <= MAX_DESCRIPTION_LEN,
+        TerminatorError::InvalidInput
+    );
+    require!(
+        params.yes_description.len() <= MAX_OUTCOME_DESCRIPTION_LEN,
+        TerminatorError::InvalidInput
+    );
+    require!(
+        params.no_description.len() <= MAX_OUTCOME_DESCRIPTION_LEN,
+        TerminatorError::InvalidInput
+    );
+
     // Transfer creation fee from creator to platform treasury
     let transfer_ctx = CpiContext::new(
         ctx.accounts.token_program.to_account_info(),
@@ -105,14 +128,19 @@ pub fn handler(ctx: Context<CreateMarket>, params: CreateMarketParams) -> Result
     market.creator = ctx.accounts.creator.key();
     market.global = ctx.accounts.global.key();
     market.market_id = params.market_id;
+    market.question = params.question.clone();
+    market.description = params.description.clone();
+    market.yes_description = params.yes_description.clone();
+    market.no_description = params.no_description.clone();
     market.created_at = clock.unix_timestamp;
     market.last_activity_ts = clock.unix_timestamp;
-    market.status = 0; // Active
+    // AUDIT FIX v1.2.2: Use market_status constant
+    market.status = crate::states::market::market_status::ACTIVE;
     market.total_trades = 0;
     market.switchboard_queue = ctx.accounts.switchboard_queue.key();
     market.randomness_account = ctx.accounts.randomness_account.key();
     
-    // Initialize outcome token mints array (binary: YES/NO)
+    // Reserved for optional tokenized positions (unused for position-based markets).
     market.outcome_token_mints = [Pubkey::default(); crate::constants::MAX_OUTCOME_TOKENS];
     market.total_position_collateral = 0;
     market.total_yes_supply = 0;
@@ -135,6 +163,8 @@ pub fn handler(ctx: Context<CreateMarket>, params: CreateMarketParams) -> Result
     market.final_no_price = None;
     market.can_redeem = false;
     market.termination_trade_slot = None;
+    market.trade_nonce = 0;
+    market.settle_trade_nonce = 0;
     
     // Creator incentive tracking
     // Fee rates are read from Global account (see Global.calculate_taker_fee_rate())
@@ -143,12 +173,15 @@ pub fn handler(ctx: Context<CreateMarket>, params: CreateMarketParams) -> Result
     
     market.bump = ctx.bumps.market;
 
-    // Note: YES/NO token mints will be initialized in init_market_tokens
+    // Note: YES/NO positions are tracked in UserPosition, not SPL tokens.
 
     emit!(MarketCreated {
         market: market.key(),
         creator: ctx.accounts.creator.key(),
         question: params.question,
+        description: params.description,
+        yes_description: params.yes_description,
+        no_description: params.no_description,
         market_id: market.market_id,
         timestamp: clock.unix_timestamp,
     });

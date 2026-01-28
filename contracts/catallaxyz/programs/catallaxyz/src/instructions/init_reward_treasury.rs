@@ -44,9 +44,10 @@ pub fn handler(ctx: Context<InitRewardTreasury>) -> Result<()> {
     let global = &ctx.accounts.global;
 
     // Verify USDC mint matches global
+    // AUDIT FIX: Use specific error type
     require!(
         ctx.accounts.usdc_mint.key() == global.usdc_mint,
-        crate::errors::TerminatorError::InvalidMarketType
+        crate::errors::TerminatorError::InvalidUsdcMint
     );
 
     msg!("Reward treasury initialized: {}", ctx.accounts.reward_treasury.key());

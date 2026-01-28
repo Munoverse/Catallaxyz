@@ -83,6 +83,9 @@ pub fn handler(ctx: Context<WithdrawRewardFees>, params: WithdrawRewardFeesParam
         signer_seeds,
     );
     token_interface::transfer_checked(transfer_ctx, params.amount, 6)?;
+    // AUDIT FIX: Reload accounts after CPI to ensure data consistency for logging
+    ctx.accounts.reward_treasury.reload()?;
+    ctx.accounts.recipient_usdc_account.reload()?;
 
     emit!(RewardFeesWithdrawn {
         recipient: ctx.accounts.recipient_usdc_account.owner,
@@ -96,7 +99,7 @@ pub fn handler(ctx: Context<WithdrawRewardFees>, params: WithdrawRewardFeesParam
     msg!("Recipient: {}", ctx.accounts.recipient_usdc_account.owner);
     msg!(
         "Remaining reward treasury balance: {} USDC",
-        (ctx.accounts.reward_treasury.amount - params.amount) as f64 / 1_000_000.0
+        ctx.accounts.reward_treasury.amount as f64 / 1_000_000.0
     );
 
     Ok(())

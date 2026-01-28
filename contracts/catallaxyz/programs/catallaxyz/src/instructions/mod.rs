@@ -4,6 +4,9 @@ pub mod init_platform_treasury;
 pub mod init_reward_treasury;
 pub mod init_creator_treasury;
 pub mod distribute_liquidity_reward;
+
+// AUDIT FIX: Shared treasury utilities
+pub mod treasury_utils;
 pub mod create_market;
 pub mod init_market_vault;
 pub mod settle_market;

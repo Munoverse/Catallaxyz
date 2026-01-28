@@ -9,7 +9,7 @@ crate-type = ["cdylib", "lib"]
 name = "catallaxyz"
 
 [features]
-default = ["no-log-ix-name"]  # 默认启用，减少日志开销
+default = ["no-log-ix-name"]  # Enabled by default to reduce log overhead
 cpi = ["no-entrypoint"]
 no-entrypoint = []
 no-idl = []
@@ -26,7 +26,7 @@ anchor-spl = { version = "0.32.1", features = ["token_2022"] }
 
 constant_time_eq = "=0.3.1"
 blake3 = "=1.8.2"
-ed25519-dalek = { version = "2.1.1", default-features = false, features = ["alloc"] }
+base64ct = "=1.7.3"
 
 [lints.rust]
 unexpected_cfgs = { level = "warn", check-cfg = ['cfg(target_os, values("solana"))'] }

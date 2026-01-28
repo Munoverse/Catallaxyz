@@ -19,7 +19,7 @@ pub struct TerminateIfInactive<'info> {
         seeds = [GLOBAL_SEED.as_bytes()],
         bump = global.bump
     )]
-    pub global: Account<'info, Global>,
+    pub global: Box<Account<'info, Global>>,
 
     /// Global authority (admin)
     #[account(
@@ -31,7 +31,7 @@ pub struct TerminateIfInactive<'info> {
         mut,
         constraint = market.is_active() @ TerminatorError::MarketNotActive,
     )]
-    pub market: Account<'info, Market>,
+    pub market: Box<Account<'info, Market>>,
 
     /// Market USDC vault (backing YES/NO positions)
     #[account(
@@ -41,7 +41,7 @@ pub struct TerminateIfInactive<'info> {
         constraint = market_usdc_vault.mint == global.usdc_mint @ TerminatorError::InvalidTokenMint,
         constraint = market_usdc_vault.owner == market.key() @ TerminatorError::Unauthorized
     )]
-    pub market_usdc_vault: InterfaceAccount<'info, TokenAccount>,
+    pub market_usdc_vault: Box<InterfaceAccount<'info, TokenAccount>>,
 
     /// Platform treasury (USDC) - used to reimburse termination execution
     #[account(
@@ -49,7 +49,7 @@ pub struct TerminateIfInactive<'info> {
         seeds = [PLATFORM_TREASURY_SEED.as_bytes()],
         bump = global.platform_treasury_bump
     )]
-    pub platform_treasury: InterfaceAccount<'info, TokenAccount>,
+    pub platform_treasury: Box<InterfaceAccount<'info, TokenAccount>>,
 
     /// Creator treasury (holds creator incentives)
     #[account(
@@ -57,7 +57,7 @@ pub struct TerminateIfInactive<'info> {
         seeds = [CREATOR_TREASURY_SEED.as_bytes()],
         bump
     )]
-    pub creator_treasury: InterfaceAccount<'info, TokenAccount>,
+    pub creator_treasury: Box<InterfaceAccount<'info, TokenAccount>>,
 
     /// Creator USDC account (receives incentive payout)
     #[account(
@@ -65,7 +65,7 @@ pub struct TerminateIfInactive<'info> {
         constraint = creator_usdc_account.owner == market.creator @ TerminatorError::InvalidTokenAccountOwner,
         constraint = creator_usdc_account.mint == global.usdc_mint @ TerminatorError::InvalidMint
     )]
-    pub creator_usdc_account: InterfaceAccount<'info, TokenAccount>,
+    pub creator_usdc_account: Box<InterfaceAccount<'info, TokenAccount>>,
 
     /// Admin USDC token account (receives reward)
     #[account(
@@ -73,10 +73,10 @@ pub struct TerminateIfInactive<'info> {
         constraint = caller_usdc_account.owner == authority.key(),
         constraint = caller_usdc_account.mint == global.usdc_mint
     )]
-    pub caller_usdc_account: InterfaceAccount<'info, TokenAccount>,
+    pub caller_usdc_account: Box<InterfaceAccount<'info, TokenAccount>>,
 
     /// USDC mint account
-    pub usdc_mint: InterfaceAccount<'info, token_interface::Mint>,
+    pub usdc_mint: Box<InterfaceAccount<'info, token_interface::Mint>>,
 
     pub token_program: Interface<'info, TokenInterface>,
 
@@ -159,6 +159,9 @@ pub fn handler(ctx: Context<TerminateIfInactive>) -> Result<()> {
                 TERMINATION_EXECUTION_REWARD_USDC,
                 usdc_decimals,
             )?;
+            // AUDIT FIX: Reload accounts after CPI to ensure data consistency
+            ctx.accounts.platform_treasury.reload()?;
+            ctx.accounts.caller_usdc_account.reload()?;
         }
     }
 
@@ -189,6 +192,9 @@ pub fn handler(ctx: Context<TerminateIfInactive>) -> Result<()> {
                 creator_accrued,
                 usdc_decimals,
             )?;
+            // AUDIT FIX: Reload accounts after CPI to ensure data consistency
+            ctx.accounts.creator_treasury.reload()?;
+            ctx.accounts.creator_usdc_account.reload()?;
             market.creator_incentive_accrued = 0;
         } else {
             msg!("Creator treasury balance insufficient; skipping creator payout");

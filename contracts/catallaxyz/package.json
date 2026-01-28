@@ -4,6 +4,11 @@
   "scripts": {
     "lint:fix": "prettier */*.js \"*/**/*{.js,.ts}\" -w",
     "lint": "prettier */*.js \"*/**/*{.js,.ts}\" --check",
+    "lint:eslint": "eslint . --ext .ts,.tsx --max-warnings 0",
+    "lint:eslint:fix": "eslint . --ext .ts,.tsx --fix",
+    "types:check": "tsc -p tsconfig.app.json --noEmit",
+    "types:watch": "tsc -p tsconfig.app.json --noEmit --watch",
+    "validate": "npm run types:check && npm run lint:eslint",
     "test": "yarn run ts-mocha -p ./tsconfig.json -t 1000000 \"tests/**/*.ts\"",
     "test:local": "ANCHOR_PROVIDER_URL=http://localhost:8899 ANCHOR_WALLET=~/.config/solana/id.json yarn test",
     "test:devnet": "ANCHOR_PROVIDER_URL=https://api.devnet.solana.com ANCHOR_WALLET=~/.config/solana/id.json yarn test",
@@ -28,21 +33,30 @@
     "check-balance": "bash scripts/check-balances.sh",
     "setup-accounts": "bash scripts/setup-test-accounts-v2.sh",
     "terminate-inactive": "ts-node backend/terminate-inactive.ts",
-    "check-inactive": "ts-node backend/cron/check-inactive.ts"
+    "check-inactive": "ts-node backend/cron/check-inactive.ts",
+    "sync-constants": "ts-node scripts/sync-constants.ts",
+    "sync-markets": "ts-node backend/sync-markets.ts"
   },
   "dependencies": {
     "@coral-xyz/anchor": "^0.32.1",
+    "@jup-ag/wallet-adapter": "^0.2.6",
+    "@magic-ext/oauth2": "^15.0.0",
     "@magic-ext/solana": "^30.0.0",
     "@solana/spl-token": "^0.4.14",
     "@solana/web3.js": "^1.98.4",
-    "magic-sdk": "^33.0.0"
+    "@types/pg": "^8.16.0",
+    "magic-sdk": "^33.0.0",
+    "pg": "^8.17.2"
   },
   "devDependencies": {
     "@types/bn.js": "^5.1.0",
     "@types/chai": "^4.3.0",
     "@types/mocha": "^9.0.0",
     "@types/node": "^20.0.0",
+    "@typescript-eslint/eslint-plugin": "^6.21.0",
+    "@typescript-eslint/parser": "^6.21.0",
     "chai": "^4.3.4",
+    "eslint": "^8.57.0",
     "mocha": "^0.13.0",
     "prettier": "^2.6.2",
     "ts-mocha": "^0.1.1",

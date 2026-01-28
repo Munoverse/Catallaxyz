@@ -7,6 +7,14 @@ pub struct Market {
     pub global: Pubkey,
     /// Unique market identifier (per creator)
     pub market_id: [u8; 32],
+    /// Market question
+    pub question: String,
+    /// Market description (long form)
+    pub description: String,
+    /// YES outcome description
+    pub yes_description: String,
+    /// NO outcome description
+    pub no_description: String,
     /// Market creation timestamp (unix seconds)
     pub created_at: i64,
     /// Last market activity timestamp (unix seconds)
@@ -21,10 +29,10 @@ pub struct Market {
     /// Fixed Switchboard randomness account for this market
     pub randomness_account: Pubkey,
     
-    // CTF Protocol fields - Binary market tokens
+    // Reserved for optional tokenized positions (unused in position-based markets).
     /// Binary outcome token mints (fixed-size array)
     /// For binary markets: [YES, NO, default, default, ...]
-    /// Only first 2 slots are used for binary markets
+    /// Only first 2 slots are used if tokenized positions are enabled.
     /// 
     /// Benefits of fixed arrays:
     /// 1. Predictable rent cost (no account reallocation needed)
@@ -84,6 +92,8 @@ pub struct Market {
     /// Trade nonce - incremented on each trade that opts for VRF check
     /// Used to ensure unique randomness: hash(vrf_value, market, user, nonce, slot)
     pub trade_nonce: u64,
+    /// Settlement nonce - incremented on each settled trade to prevent replay
+    pub settle_trade_nonce: u64,
     
     // ============================================
     // Creator Incentive Tracking
@@ -114,9 +124,12 @@ pub mod market_status {
 
 impl Market {
     // Space calculation - Binary market only (optimized)
-    // discriminator(8) + creator(32) + global(32) + market_id(32) + created_at(8) + last_activity_ts(8) + status(1)
+    // discriminator(8) + creator(32) + global(32) + market_id(32)
+    // + question(4 + MAX_QUESTION_LEN) + description(4 + MAX_DESCRIPTION_LEN)
+    // + yes_description(4 + MAX_OUTCOME_DESCRIPTION_LEN) + no_description(4 + MAX_OUTCOME_DESCRIPTION_LEN)
+    // + created_at(8) + last_activity_ts(8) + status(1)
     // + switchboard_queue(32) + randomness_account(32)
-    // + outcome_token_mints: [Pubkey; 20] (32 * 20 = 640)
+    // + outcome_token_mints: [Pubkey; MAX_OUTCOME_TOKENS] (32 * MAX_OUTCOME_TOKENS)
     // + total_position_collateral(8) + total_yes_supply(8) + total_no_supply(8)
     // + total_redeemable_usdc(8) + total_redeemed_usdc(8)
     // + last_trade_outcome(1+1)
@@ -128,11 +141,17 @@ impl Market {
     // + creator_incentive_accrued(8) [fee rates moved to Global]
     // + is_paused(1) + paused_at(1+8)
     // + bump(1)
-    pub const INIT_SPACE: usize = 8 + 32 + 32 + 32 + 8 + 8 + 1 + 32 + 32
-        + 640 + 8 + 8 + 8 + 8 + 8 + 1 + 1 + 1 + 32 + 8
+    pub const INIT_SPACE: usize = 8 + 32 + 32 + 32
+        + 4 + crate::constants::MAX_QUESTION_LEN
+        + 4 + crate::constants::MAX_DESCRIPTION_LEN
+        + 4 + crate::constants::MAX_OUTCOME_DESCRIPTION_LEN
+        + 4 + crate::constants::MAX_OUTCOME_DESCRIPTION_LEN
+        + 8 + 8 + 1 + 32 + 32
+        + (32 * MAX_OUTCOME_TOKENS) + 8 + 8 + 8 + 8 + 8 + 1 + 1 + 1 + 32 + 8
         + 1 + 8 + 1 + 8 + 1 + 8
         + 1 + 4 + 1 + 1 + 8 + 1 + 8 + 1 + 1 + 8
         + 8  // trade_nonce
+        + 8  // settle_trade_nonce
         + 8  // creator_incentive_accrued (fee rates removed, read from Global)
         + 1 + 1 + 8
         + 1;
@@ -141,14 +160,41 @@ impl Market {
     // Rent cost: ~0.007 SOL
 
     pub fn is_active(&self) -> bool {
-        self.status == 0
+        self.status == market_status::ACTIVE
+    }
+    
+    // AUDIT FIX v1.2.2: Add status transition methods for cleaner code
+    
+    /// Check if market is settled
+    pub fn is_settled(&self) -> bool {
+        self.status == market_status::SETTLED
+    }
+    
+    /// Check if market is terminated
+    pub fn is_terminated(&self) -> bool {
+        self.status == market_status::TERMINATED
+    }
+    
+    /// Check if market can be traded (active and not paused)
+    pub fn can_trade(&self) -> bool {
+        self.is_active() && !self.is_paused && !self.is_randomly_terminated
+    }
+    
+    /// Mark market as settled
+    pub fn set_settled(&mut self) {
+        self.status = market_status::SETTLED;
+    }
+    
+    /// Mark market as terminated (inactivity)
+    pub fn set_terminated(&mut self) {
+        self.status = market_status::TERMINATED;
     }
 
     // ============================================
     // Backward compatibility helper methods
     // ============================================
 
-    /// Get YES token mint (for binary markets)
+    /// Get YES token mint (for optional tokenized positions)
     pub fn yes_token_mint(&self) -> Option<Pubkey> {
         let mint = self.outcome_token_mints[0];
         if mint != Pubkey::default() {
@@ -158,7 +204,7 @@ impl Market {
         }
     }
 
-    /// Get NO token mint (for binary markets)
+    /// Get NO token mint (for optional tokenized positions)
     pub fn no_token_mint(&self) -> Option<Pubkey> {
         let mint = self.outcome_token_mints[1];
         if mint != Pubkey::default() {
@@ -168,7 +214,7 @@ impl Market {
         }
     }
 
-    /// Check if tokens have been initialized
+    /// Check if token mints have been initialized (tokenized positions only)
     pub fn tokens_initialized(&self) -> bool {
         self.outcome_token_mints[0] != Pubkey::default() &&
         self.outcome_token_mints[1] != Pubkey::default()
@@ -196,10 +242,7 @@ impl Market {
         Ok(())
     }
     
-    /// Check if market can be traded (not terminated and not paused)
-    pub fn can_trade(&self) -> bool {
-        self.is_active() && !self.is_randomly_terminated && !self.is_paused
-    }
+    // NOTE: can_trade() is defined above at line 179, this duplicate removed in v1.2.4
     
     /// Pause market (admin only)
     pub fn pause(&mut self, now_ts: i64) {
@@ -208,9 +251,13 @@ impl Market {
     }
     
     /// Resume market (admin only)
-    pub fn resume(&mut self) {
+    /// Resets activity timestamp to prevent immediate inactivity termination after long pause
+    pub fn resume(&mut self, now_ts: i64, now_slot: u64) {
         self.is_paused = false;
         self.paused_at = None;
+        // Reset activity time to prevent immediate inactivity termination
+        self.last_activity_ts = now_ts;
+        self.last_trade_slot = Some(now_slot);
     }
 
     /// Update market activity timestamps and last slot.
@@ -242,7 +289,7 @@ impl Market {
     ///
     /// Returns `Ok(true)` if termination was executed, `Ok(false)` otherwise.
     pub fn terminate_if_inactive(&mut self, now_ts: i64, now_slot: u64) -> Result<bool> {
-        use crate::constants::{INACTIVITY_TIMEOUT_SECONDS, PRICE_SCALE};
+        use crate::constants::INACTIVITY_TIMEOUT_SECONDS;
 
         if self.is_randomly_terminated || self.status != 0 {
             return Ok(false);
@@ -252,12 +299,10 @@ impl Market {
         }
 
         // Best-effort final price: prefer last observed YES, else derive from NO, else 0.5.
-        let yes_price = match (self.last_trade_yes_price, self.last_trade_no_price) {
-            (Some(yes), _) => yes.min(PRICE_SCALE),
-            (None, Some(no)) => PRICE_SCALE.saturating_sub(no.min(PRICE_SCALE)),
-            (None, None) => PRICE_SCALE / 2,
-        };
-        let no_price = PRICE_SCALE.saturating_sub(yes_price);
+        let (yes_price, no_price) = crate::utils::derive_final_prices(
+            self.last_trade_yes_price,
+            self.last_trade_no_price,
+        );
 
         self.last_trade_yes_price = Some(yes_price);
         self.last_trade_no_price = Some(no_price);
@@ -267,7 +312,16 @@ impl Market {
     }
     
     /// Set market termination state
+    /// Returns error if market is not active
     pub fn terminate_market(&mut self, yes_price: u64, no_price: u64, trade_slot: u64) -> Result<()> {
+        use crate::errors::TerminatorError;
+        
+        // Verify market is active before terminating
+        require!(
+            self.status == market_status::ACTIVE,
+            TerminatorError::MarketNotActive
+        );
+        
         self.is_randomly_terminated = true;
         self.final_yes_price = Some(yes_price);
         self.final_no_price = Some(no_price);
@@ -283,9 +337,12 @@ impl Market {
     
     /// Increment trade nonce and return the new value
     /// Used to ensure unique randomness per trade
-    pub fn increment_trade_nonce(&mut self) -> u64 {
-        self.trade_nonce = self.trade_nonce.saturating_add(1);
-        self.trade_nonce
+    /// AUDIT FIX v1.2.0: Use checked_add for arithmetic safety
+    pub fn increment_trade_nonce(&mut self) -> Result<u64> {
+        self.trade_nonce = self.trade_nonce
+            .checked_add(1)
+            .ok_or(error!(crate::errors::TerminatorError::ArithmeticOverflow))?;
+        Ok(self.trade_nonce)
     }
     
     /// Generate unique randomness by combining VRF value with trade-specific data
@@ -295,6 +352,7 @@ impl Market {
     pub fn derive_unique_randomness(
         &self,
         vrf_value: &[u8; 32],
+        market_key: &Pubkey,
         user_key: &Pubkey,
         slot: u64,
     ) -> [u8; 32] {
@@ -302,7 +360,7 @@ impl Market {
         // Use blake3 hasher which is included in dependencies
         let mut input = Vec::with_capacity(112);
         input.extend_from_slice(vrf_value);
-        input.extend_from_slice(self.switchboard_queue.as_ref()); // Use queue as market identifier
+        input.extend_from_slice(market_key.as_ref());
         input.extend_from_slice(user_key.as_ref());
         input.extend_from_slice(&self.trade_nonce.to_le_bytes());
         input.extend_from_slice(&slot.to_le_bytes());
@@ -317,5 +375,38 @@ impl Market {
                 .expect("slice is always 8 bytes")
         );
         random_u64 % max
+    }
+    
+    // ============================================
+    // Invariant Checks
+    // ============================================
+    
+    /// Verify position invariants (YES supply == NO supply)
+    /// This ensures the market is in a consistent state after operations
+    pub fn verify_position_invariants(&self) -> Result<()> {
+        use crate::errors::TerminatorError;
+        require!(
+            self.total_yes_supply == self.total_no_supply,
+            TerminatorError::InvalidInput
+        );
+        Ok(())
+    }
+    
+    /// Verify vault balance invariant
+    /// Vault balance must be >= total_position_collateral
+    pub fn verify_vault_invariant(&self, vault_balance: u64) -> Result<()> {
+        use crate::errors::TerminatorError;
+        require!(
+            vault_balance >= self.total_position_collateral,
+            TerminatorError::InsufficientVaultBalance
+        );
+        Ok(())
+    }
+    
+    /// Run all invariant checks
+    pub fn verify_all_invariants(&self, vault_balance: u64) -> Result<()> {
+        self.verify_position_invariants()?;
+        self.verify_vault_invariant(vault_balance)?;
+        Ok(())
     }
 }

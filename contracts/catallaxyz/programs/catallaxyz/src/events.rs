@@ -5,6 +5,9 @@ pub struct MarketCreated {
     pub market: Pubkey,
     pub creator: Pubkey,
     pub question: String,
+    pub description: String,
+    pub yes_description: String,
+    pub no_description: String,
     pub market_id: [u8; 32],
     pub timestamp: i64,
 }
@@ -44,56 +47,12 @@ pub struct PositionMerged {
 pub struct CtfTokensRedeemed {
     pub market: Pubkey,
     pub user: Pubkey,
-    pub winning_outcome: u8, // 0: YES, 1: NO
+    /// Outcome redeemed (0: YES, 1: NO)
+    pub winning_outcome: u8,
     pub token_amount: u64,
     pub reward_amount: u64,
     pub timestamp: i64,
 }
-
-// ============================================
-// Manifest Orderbook Events
-// ============================================
-
-#[event]
-pub struct OrderPlaced {
-    pub market: Pubkey,
-    pub user: Pubkey,
-    pub outcome_index: u8,
-    pub side: u8, // 0: Bid (buy), 1: Ask (sell)
-    pub price: u64,
-    pub size: u64,
-    pub client_order_id: u64,
-    pub timestamp: i64,
-}
-
-#[event]
-pub struct OrderCancelled {
-    pub market: Pubkey,
-    pub user: Pubkey,
-    pub order_sequence_number: u64,
-    pub timestamp: i64,
-}
-
-#[event]
-pub struct SwapExecuted {
-    pub market: Pubkey,
-    pub user: Pubkey,
-    pub outcome_index: u8,
-    pub side: u8, // 0: Bid (buy), 1: Ask (sell)
-    pub in_amount: u64,
-    pub min_out_amount: u64,
-    pub timestamp: i64,
-}
-
-#[event]
-pub struct ManifestMarketCreated {
-    pub market: Pubkey,
-    pub manifest_market_yes: Pubkey,
-    pub manifest_market_no: Pubkey,
-    pub outcome_count: u8,
-    pub timestamp: i64,
-}
-
 
 // ============================================
 // Termination Events
@@ -143,36 +102,33 @@ pub struct TerminationCheckResult {
     pub timestamp: i64,
 }
 
-/// VRF fee collection event
-/// 
-/// Triggered when user opts for termination check
-/// Records VRF fee payment for tracking and auditing
-#[event]
-pub struct VrfFeeCollected {
-    /// Market address
-    pub market: Pubkey,
-    /// User who paid the VRF fee
-    pub user: Pubkey,
-    /// VRF fee amount (lamports)
-    pub fee_amount: u64,
-    /// Transaction slot
-    pub slot: u64,
-}
-
 // ============================================
 // Platform Fee Events
 // ============================================
 
 /// Trading fee collection event
 /// 
-/// Triggered when user executes market order (swap) on Manifest
+/// Triggered when a trade is settled on-chain
 /// Records trading fee based on dynamic fee curve
+/// 
+/// AUDIT FIX v1.2.5: Added maker, taker, outcome_type, side, size fields
+/// for complete trade event tracking needed by off-chain sync
 #[event]
 pub struct TradingFeeCollected {
     /// Market address
     pub market: Pubkey,
-    /// User who paid the trading fee
+    /// Maker address (liquidity provider)
+    pub maker: Pubkey,
+    /// Taker address (aggressor)
+    pub taker: Pubkey,
+    /// User who paid the trading fee (usually taker)
     pub user: Pubkey,
+    /// Outcome type: 0 = YES, 1 = NO
+    pub outcome_type: u8,
+    /// Trade side: 0 = BUY, 1 = SELL
+    pub side: u8,
+    /// Trade size in lamports
+    pub size: u64,
     /// Trading fee amount (USDC, scaled by 10^6)
     pub fee_amount: u64,
     /// Fee rate applied (scaled by 10^6, e.g., 32000 = 3.2%)

@@ -61,8 +61,7 @@ impl Global {
     /// - price 0.10/0.90: 0.8%
     /// - price 0.01/0.99: 0.2% (extreme)
     pub fn calculate_taker_fee_rate(&self, price: u64) -> u32 {
-        const PRICE_SCALE: u64 = 1_000_000;
-        const CENTER_PRICE: u64 = 500_000; // 0.5 scaled
+        const CENTER_PRICE: u64 = crate::constants::PRICE_SCALE / 2; // 0.5 scaled
         
         // Distance from center (0-500000)
         let distance_from_center = if price > CENTER_PRICE {

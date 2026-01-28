@@ -5,10 +5,10 @@ use crate::errors::TerminatorError;
 use crate::events::PositionMerged;
 use crate::states::{market::Market, market::market_status, global::Global, UserPosition};
 
-/// Merge YES and NO tokens back to USDC for binary market
+/// Merge YES and NO positions back to USDC for binary market
 /// 
 /// Merge: 1 YES + 1 NO → 1 USDC
-/// User must hold equal amounts of both YES and NO tokens
+/// User must hold equal amounts of both YES and NO positions
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
 pub struct MergePositionSingleParams {
     /// Amount to merge
@@ -38,9 +38,8 @@ pub struct MergePositionSingle<'info> {
         ],
         bump = market.bump,
         constraint = market.global == global.key() @ TerminatorError::InvalidAccountInput,
-        // Allow merge only for active markets OR terminated markets (for redemption)
-        // Users can merge positions in terminated markets to recover USDC
-        constraint = market.is_active() || market.is_randomly_terminated @ TerminatorError::MarketNotActive,
+        // Allow merge for active markets or after redemption is enabled.
+        constraint = market.is_active() || market.can_redeem @ TerminatorError::MarketNotActive,
     )]
     pub market: Box<Account<'info, Market>>,
 
@@ -165,8 +164,11 @@ pub fn handler(
             TerminatorError::InvalidInput
         );
     }
+    
+    // Reload vault account after CPI to get fresh balance
+    ctx.accounts.market_usdc_vault.reload()?;
     require!(
-        ctx.accounts.market_usdc_vault.amount == market.total_position_collateral,
+        ctx.accounts.market_usdc_vault.amount >= market.total_position_collateral,
         TerminatorError::InsufficientVaultBalance
     );
 

@@ -81,6 +81,9 @@ pub fn handler(
         signer_seeds,
     );
     token_interface::transfer_checked(transfer_ctx, params.amount, 6)?;
+    // AUDIT FIX: Reload accounts after CPI to ensure data consistency
+    ctx.accounts.reward_treasury.reload()?;
+    ctx.accounts.recipient_usdc_account.reload()?;
 
     emit!(LiquidityRewardDistributed {
         recipient: ctx.accounts.recipient_usdc_account.owner,
@@ -92,6 +95,8 @@ pub fn handler(
     msg!("Liquidity reward distributed");
     msg!("Amount: {} USDC", params.amount as f64 / 1_000_000.0);
     msg!("Recipient: {}", ctx.accounts.recipient_usdc_account.owner);
+    msg!("Remaining reward treasury balance: {} USDC",
+        ctx.accounts.reward_treasury.amount as f64 / 1_000_000.0);
 
     Ok(())
 }

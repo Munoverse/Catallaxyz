@@ -18,7 +18,7 @@ pub struct DepositUsdc<'info> {
         seeds = [GLOBAL_SEED.as_bytes()],
         bump = global.bump
     )]
-    pub global: Account<'info, Global>,
+    pub global: Box<Account<'info, Global>>,
 
     #[account(
         seeds = [
@@ -28,8 +28,10 @@ pub struct DepositUsdc<'info> {
         ],
         bump = market.bump,
         constraint = market.global == global.key() @ TerminatorError::InvalidAccountInput,
+        // Prevent deposits to terminated/settled/paused markets
+        constraint = market.can_trade() @ TerminatorError::MarketNotActive,
     )]
-    pub market: Account<'info, Market>,
+    pub market: Box<Account<'info, Market>>,
 
     #[account(
         init_if_needed,
@@ -38,7 +40,7 @@ pub struct DepositUsdc<'info> {
         seeds = [b"user_balance", market.key().as_ref(), user.key().as_ref()],
         bump
     )]
-    pub user_balance: Account<'info, UserBalance>,
+    pub user_balance: Box<Account<'info, UserBalance>>,
 
     #[account(
         init_if_needed,
@@ -47,7 +49,7 @@ pub struct DepositUsdc<'info> {
         seeds = [b"user_position", market.key().as_ref(), user.key().as_ref()],
         bump
     )]
-    pub user_position: Account<'info, UserPosition>,
+    pub user_position: Box<Account<'info, UserPosition>>,
 
     #[account(
         mut,
@@ -56,12 +58,17 @@ pub struct DepositUsdc<'info> {
         constraint = market_usdc_vault.mint == global.usdc_mint @ TerminatorError::InvalidTokenMint,
         constraint = market_usdc_vault.owner == market.key() @ TerminatorError::Unauthorized
     )]
-    pub market_usdc_vault: InterfaceAccount<'info, TokenAccount>,
+    pub market_usdc_vault: Box<InterfaceAccount<'info, TokenAccount>>,
 
-    #[account(mut)]
-    pub user_usdc_account: InterfaceAccount<'info, TokenAccount>,
+    #[account(
+        mut,
+        // Validate user owns this token account and it's the correct mint
+        constraint = user_usdc_account.owner == user.key() @ TerminatorError::Unauthorized,
+        constraint = user_usdc_account.mint == global.usdc_mint @ TerminatorError::InvalidTokenMint,
+    )]
+    pub user_usdc_account: Box<InterfaceAccount<'info, TokenAccount>>,
 
-    pub usdc_mint: InterfaceAccount<'info, Mint>,
+    pub usdc_mint: Box<InterfaceAccount<'info, Mint>>,
 
     pub token_program: Interface<'info, TokenInterface>,
     pub system_program: Program<'info, System>,
@@ -97,6 +104,8 @@ pub fn handler(ctx: Context<DepositUsdc>, params: DepositUsdcParams) -> Result<(
         },
     );
     token_interface::transfer_checked(transfer_ctx, params.amount, 6)?;
+    // AUDIT FIX v1.2.0: Reload vault after CPI to ensure data consistency
+    ctx.accounts.market_usdc_vault.reload()?;
 
     ctx.accounts.user_balance.usdc_balance = ctx.accounts.user_balance.usdc_balance
         .checked_add(params.amount)

@@ -50,9 +50,10 @@ pub fn handler(ctx: Context<InitMarketVault>) -> Result<()> {
     let global = Global::try_deserialize(&mut &global_data[8..])?;
     
     // Verify USDC mint matches global
+    // AUDIT FIX: Use specific error type
     require!(
         ctx.accounts.usdc_mint.key() == global.usdc_mint,
-        crate::errors::TerminatorError::InvalidMarketType
+        crate::errors::TerminatorError::InvalidUsdcMint
     );
     
     // Vault is initialized by Anchor's token constraint

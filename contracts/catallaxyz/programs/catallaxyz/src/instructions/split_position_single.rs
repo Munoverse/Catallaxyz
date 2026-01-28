@@ -5,10 +5,10 @@ use crate::errors::TerminatorError;
 use crate::events::PositionSplit;
 use crate::states::{market::Market, global::Global, UserPosition};
 
-/// Split USDC into YES and NO tokens for binary market
+/// Split USDC into YES and NO positions for binary market
 /// 
 /// Binary market: 1 USDC → 1 YES + 1 NO
-/// User deposits USDC and receives equal amounts of YES and NO tokens
+/// User deposits USDC and receives equal amounts of YES and NO positions
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
 pub struct SplitPositionSingleParams {
     /// Amount of USDC to split
@@ -37,7 +37,8 @@ pub struct SplitPositionSingle<'info> {
             market.market_id.as_ref(),
         ],
         bump = market.bump,
-        constraint = market.is_active() @ TerminatorError::MarketNotActive,
+        // Use can_trade() to also check pause status (not just active status)
+        constraint = market.can_trade() @ TerminatorError::MarketNotActive,
         constraint = market.global == global.key() @ TerminatorError::InvalidAccountInput,
     )]
     pub market: Box<Account<'info, Market>>,
@@ -137,8 +138,11 @@ pub fn handler(
         market.total_position_collateral == market.total_yes_supply,
         TerminatorError::InvalidInput
     );
+    
+    // Reload vault account after CPI to get fresh balance
+    ctx.accounts.market_usdc_vault.reload()?;
     require!(
-        ctx.accounts.market_usdc_vault.amount == market.total_position_collateral,
+        ctx.accounts.market_usdc_vault.amount >= market.total_position_collateral,
         TerminatorError::InsufficientVaultBalance
     );
 

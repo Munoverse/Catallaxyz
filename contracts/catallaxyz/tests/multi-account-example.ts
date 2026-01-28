@@ -7,12 +7,12 @@ import * as fs from "fs";
 import { expect } from "chai";
 
 /**
- * 多账户交易测试示例
- * 
- * 这个测试展示如何：
- * 1. 加载多个测试账户
- * 2. 使用不同账户进行交易
- * 3. 验证账户余额变化
+ * Multi-account trading example.
+ *
+ * This test demonstrates:
+ * 1. Loading multiple test accounts
+ * 2. Trading with different accounts
+ * 3. Verifying balance changes
  */
 
 describe("Multi-account trading example", () => {
@@ -29,7 +29,7 @@ describe("Multi-account trading example", () => {
       return Keypair.fromSecretKey(Uint8Array.from(secretKey));
     } catch (e) {
       throw new Error(
-        `无法加载账户 ${accountNumber}。请先运行: bash scripts/setup-test-accounts-v2.sh`
+        `Unable to load account ${accountNumber}. Run: bash scripts/setup-test-accounts-v2.sh`
       );
     }
   };
@@ -43,7 +43,7 @@ describe("Multi-account trading example", () => {
       return new PublicKey(config.testUsdcMint);
     } catch (e) {
       throw new Error(
-        "无法加载测试 USDC 配置。请先运行: yarn create-test-usdc 或使用 CLI 创建"
+        "Unable to load test USDC config. Run: yarn create-test-usdc or create it via CLI"
       );
     }
   };
@@ -70,10 +70,10 @@ describe("Multi-account trading example", () => {
   };
 
   it("Load and display test accounts", async () => {
-    console.log("\n=== 测试账户信息 ===\n");
+    console.log("\n=== Test Account Info ===\n");
 
     const usdcMint = getTestUsdcMint();
-    console.log("测试 USDC Mint:", usdcMint.toString());
+    console.log("Test USDC Mint:", usdcMint.toString());
     console.log("");
 
     // Load 3 test accounts
@@ -85,13 +85,13 @@ describe("Multi-account trading example", () => {
         );
         const usdcBalance = await getUsdcBalance(account.publicKey, usdcMint);
 
-        console.log(`账户 ${i}:`);
-        console.log(`  地址: ${account.publicKey.toString()}`);
+        console.log(`Account ${i}:`);
+        console.log(`  Address: ${account.publicKey.toString()}`);
         console.log(`  SOL: ${solBalance / anchor.web3.LAMPORTS_PER_SOL}`);
         console.log(`  USDC: ${usdcBalance}`);
         console.log("");
       } catch (e) {
-        console.log(`账户 ${i}: 未找到`);
+        console.log(`Account ${i}: not found`);
         console.log("");
       }
     }
@@ -106,7 +106,7 @@ describe("Multi-account trading example", () => {
     );
     const usdcBalance = await getUsdcBalance(account1.publicKey, usdcMint);
 
-    console.log("\n账户 1 余额:");
+    console.log("\nAccount 1 balances:");
     console.log(`SOL: ${solBalance / anchor.web3.LAMPORTS_PER_SOL}`);
     console.log(`USDC: ${usdcBalance}`);
 
@@ -129,7 +129,7 @@ describe("Multi-account trading example", () => {
     //   .signers([creator])
     //   .rpc();
     
-    console.log("市场创建成功");
+    console.log("Market created successfully");
   });
 
   it("Scenario 2: Account 2 buys YES tokens", async () => {
@@ -139,7 +139,7 @@ describe("Multi-account trading example", () => {
     // Record balance before buy
     const balanceBefore = await getUsdcBalance(buyer.publicKey, usdcMint);
     
-    // Buy logic (using Manifest order book)
+    // Buy logic (off-chain matching, on-chain settlement)
     // const tx = await program.methods
     //   .placeOrder({...})
     //   .accounts({...})
@@ -150,7 +150,7 @@ describe("Multi-account trading example", () => {
     const balanceAfter = await getUsdcBalance(buyer.publicKey, usdcMint);
     expect(balanceAfter).to.be.lessThan(balanceBefore);
     
-    console.log(`USDC 消耗: ${balanceBefore - balanceAfter}`);
+    console.log(`USDC spent: ${balanceBefore - balanceAfter}`);
   });
 
   it("Scenario 3: Account 3 buys NO tokens", async () => {

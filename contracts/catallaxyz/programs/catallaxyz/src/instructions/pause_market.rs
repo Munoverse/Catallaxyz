@@ -41,7 +41,8 @@ pub struct PauseMarket<'info> {
             market.market_id.as_ref(),
         ],
         bump = market.bump,
-        constraint = !market.is_paused @ TerminatorError::InvalidMarketType,
+        // AUDIT FIX: Use specific error type
+        constraint = !market.is_paused @ TerminatorError::MarketPaused,
     )]
     pub market: Account<'info, Market>,
 

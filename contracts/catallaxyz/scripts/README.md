@@ -1,173 +1,173 @@
-# Catallaxyz 初始化脚本说明
+# Catallaxyz Initialization Scripts
 
-本目录包含 Catallaxyz 项目的所有初始化和管理脚本。
+This folder contains all initialization and admin scripts for Catallaxyz.
 
-## 📋 脚本总览
+## 📋 Script Overview
 
-### 初始化脚本
+### Initialization Scripts
 
-| 脚本 | 用途 | 网络 | 命令 |
+| Script | Purpose | Network | Command |
 |------|------|------|------|
-| `create-test-usdc.ts` | 创建测试 USDC mint | Devnet | `yarn create-test-usdc` |
-| `initialize-with-tusdc.ts` | 使用测试 USDC 初始化 Global | Devnet | `yarn init-with-tusdc` |
-| `initialize-platform-treasury.ts` | 初始化平台财库 | Devnet/Mainnet | `yarn init-platform-treasury` |
-| `initialize-reward-treasury.ts` | 初始化奖励财库 | Devnet/Mainnet | `yarn init-reward-treasury` |
-| `initialize-creator-treasury.ts` | 初始化创建者激励财库 | Devnet/Mainnet | `yarn init-creator-treasury` |
-| `initialize-treasury.ts` | 初始化 VRF 财库 | Devnet/Mainnet | `yarn init-treasury` |
-| `initialize-mainnet.ts` | 主网完整初始化（一键） | **Mainnet** | `yarn init-mainnet` |
+| `create-test-usdc.ts` | Create a test USDC mint | Devnet | `yarn create-test-usdc` |
+| `initialize-with-tusdc.ts` | Initialize Global with test USDC | Devnet | `yarn init-with-tusdc` |
+| `initialize-platform-treasury.ts` | Initialize platform treasury | Devnet/Mainnet | `yarn init-platform-treasury` |
+| `initialize-reward-treasury.ts` | Initialize reward treasury | Devnet/Mainnet | `yarn init-reward-treasury` |
+| `initialize-creator-treasury.ts` | Initialize creator incentive treasury | Devnet/Mainnet | `yarn init-creator-treasury` |
+| `initialize-treasury.ts` | Initialize VRF treasury | Devnet/Mainnet | `yarn init-treasury` |
+| `initialize-mainnet.ts` | One-click mainnet initialization | **Mainnet** | `yarn init-mainnet` |
 
-### 管理脚本
+### Admin Scripts
 
-| 脚本 | 用途 | 命令 |
+| Script | Purpose | Command |
 |------|------|------|
-| `mint-test-usdc.ts` | 铸造测试 USDC | `yarn mint-test-usdc <amount>` |
-| `mint-tusdc-to-user.ts` | 给指定用户铸造测试 USDC | `yarn mint-tusdc-to <address> <amount>` |
-| `check-program-config.ts` | 检查程序配置 | `yarn check-config` |
-| `verify-security.ts` | 安全审计 | `yarn verify-security` |
+| `mint-test-usdc.ts` | Mint test USDC | `yarn mint-test-usdc <amount>` |
+| `mint-tusdc-to-user.ts` | Mint test USDC to a user | `yarn mint-tusdc-to <address> <amount>` |
+| `check-program-config.ts` | Check program configuration | `yarn check-config` |
+| `verify-security.ts` | Security verification | `yarn verify-security` |
 
 ---
 
-## 🚀 Devnet 初始化流程
+## 🚀 Devnet Initialization Flow
 
-### 步骤 1: 创建测试 USDC
+### Step 1: Create test USDC
 
 ```bash
 cd catallaxyz
 yarn create-test-usdc
 ```
 
-这会创建：
-- 一个新的 tUSDC mint（6 decimals）
-- 保存配置到 `test-usdc-config.json`
+This creates:
+- A new tUSDC mint (6 decimals)
+- A config file saved to `test-usdc-config.json`
 
-### 步骤 2: 初始化 Global 账户
+### Step 2: Initialize Global
 
 ```bash
 yarn init-with-tusdc
 ```
 
-这会：
-- 使用 tUSDC 初始化 Global 账户
-- 设置 authority 为当前钱包
+This:
+- Initializes the Global account with tUSDC
+- Sets authority to the current wallet
 
-### 步骤 3: 初始化 Platform Treasury
+### Step 3: Initialize Platform Treasury
 
 ```bash
 yarn init-platform-treasury
 ```
 
-这会：
-- 创建 Platform Treasury token 账户
-- 用于收集交易费和创建费
+This:
+- Creates the platform treasury token account
+- Collects trading fees and creation fees
 
-### 步骤 4: 初始化 Reward Treasury
+### Step 4: Initialize Reward Treasury
 
 ```bash
 yarn init-reward-treasury
 ```
 
-这会：
-- 创建 Reward Treasury token 账户
-- 用于收集流动性奖励资金
+This:
+- Creates the reward treasury token account
+- Funds liquidity rewards
 
-### 步骤 5: 初始化 Creator Treasury
+### Step 5: Initialize Creator Treasury
 
 ```bash
 yarn init-creator-treasury
 ```
 
-这会：
-- 创建 Creator Treasury token 账户
-- 用于收集市场创建者激励资金
+This:
+- Creates the creator treasury token account
+- Collects creator incentives
 
-### 步骤 6: 初始化 VRF Treasury
+### Step 6: Initialize VRF Treasury
 
 ```bash
 yarn init-treasury
 ```
 
-这会：
-- 创建 VRF Treasury token 账户
-- 用于 VRF 相关费用
+This:
+- Creates the VRF treasury token account
+- Pays VRF-related fees
 
-### 步骤 7: 验证配置
+### Step 7: Verify configuration
 
 ```bash
 yarn check-config
 ```
 
-确认所有账户都已正确初始化。
+Confirm all accounts are initialized correctly.
 
-### 步骤 8: 铸造测试 USDC
+### Step 8: Mint test USDC
 
 ```bash
-# 给自己铸造 10,000 tUSDC
+# Mint 10,000 tUSDC to yourself
 yarn mint-test-usdc 10000
 
-# 给其他用户铸造
-yarn mint-tusdc-to <用户地址> 1000
+# Mint to another user
+yarn mint-tusdc-to <user-address> 1000
 ```
 
 ---
 
-## 🌐 Mainnet 初始化流程
+## 🌐 Mainnet Initialization Flow
 
-### ⚠️ 重要提醒
+### ⚠️ Important
 
-**主网部署是不可逆的操作，请务必：**
-1. 完成代码审计
-2. 在 Devnet 充分测试
-3. 准备至少 10 SOL
-4. 备份密钥
-5. 使用硬件钱包或多签（推荐）
+**Mainnet deployment is irreversible. Make sure to:**
+1. Complete a code audit
+2. Test thoroughly on Devnet
+3. Prepare at least 10 SOL
+4. Back up keys
+5. Use hardware wallet or multisig (recommended)
 
-### 环境准备
+### Environment setup
 
 ```bash
-# 1. 配置 Solana CLI
+# 1. Configure Solana CLI
 solana config set --url https://api.mainnet-beta.solana.com
 solana config set --keypair ~/.config/solana/mainnet-deployer.json
 
-# 2. 检查余额
+# 2. Check balance
 solana balance
-# 应该有至少 5-10 SOL
+# Ensure at least 5-10 SOL
 
-# 3. 配置环境变量（推荐使用付费 RPC）
+# 3. Configure environment variables (paid RPC recommended)
 export ANCHOR_PROVIDER_URL=https://mainnet.helius-rpc.com/?api-key=YOUR_KEY
 export ANCHOR_WALLET=~/.config/solana/mainnet-deployer.json
 ```
 
-### 方式 1: 一键初始化（推荐）
+### Option 1: One-click initialization (recommended)
 
 ```bash
 cd catallaxyz
 yarn init-mainnet
 ```
 
-这个脚本会自动完成：
-1. ✅ 检查网络和余额
-2. ✅ 验证程序已部署
-3. ✅ 初始化 Global 账户（使用真实 USDC）
-4. ✅ 初始化 Platform Treasury
-5. ✅ 初始化 VRF Treasury
-6. ✅ 最终验证
+This script performs:
+1. ✅ Network and balance checks
+2. ✅ Program deployment verification
+3. ✅ Global initialization (with real USDC)
+4. ✅ Platform treasury initialization
+5. ✅ VRF treasury initialization
+6. ✅ Final verification
 
-**脚本特点：**
-- 有 10 秒确认等待期
-- 自动检测已初始化的账户
-- 完整的错误处理
-- 详细的日志输出
+**Script highlights:**
+- 10-second confirmation delay
+- Auto-detects already-initialized accounts
+- Robust error handling
+- Detailed logs
 
-### 方式 2: 手动逐步初始化
+### Option 2: Manual step-by-step initialization
 
-如果你想更多控制，可以分步执行：
+If you want more control, run steps individually:
 
 ```bash
-# 1. 修改 initialize-with-tusdc.ts
-# 将 tUSDC mint 改为主网 USDC:
+# 1. Edit initialize-with-tusdc.ts
+# Replace the tUSDC mint with mainnet USDC:
 # EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
 
-# 2. 逐步执行
+# 2. Run the steps
 yarn init-with-tusdc
 yarn init-platform-treasury
 yarn init-treasury
@@ -176,51 +176,51 @@ yarn check-config
 
 ---
 
-## 🔍 检查和验证
+## 🔍 Checks and Verification
 
-### 检查程序配置
+### Check program configuration
 
 ```bash
 yarn check-config
 ```
 
-输出示例：
+Example output:
 ```
 ✅ Global Account
    Authority: 7xK...abc
    USDC Mint: EPjF...1v
-   
+
 ✅ Platform Treasury
    Balance: 0 USDC
-   
+
 ✅ VRF Treasury
    Balance: 0 USDC
 ```
 
-### 安全审计
+### Security verification
 
 ```bash
 yarn verify-security
 ```
 
-检查项目：
-- ✅ Authority 配置
-- ✅ Treasury 初始化
-- ✅ 权限设置
-- ✅ 费率配置
+Checklist:
+- ✅ Authority configuration
+- ✅ Treasury initialization
+- ✅ Access control
+- ✅ Fee configuration
 
 ---
 
-## 📝 重要地址
+## 📝 Important Addresses
 
 ### Devnet
-- tUSDC Mint: 在 `test-usdc-config.json` 中
+- tUSDC Mint: stored in `test-usdc-config.json`
 
 ### Mainnet
 - USDC Mint: `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v`
-- Program ID: 运行 `anchor keys list` 查看
+- Program ID: run `anchor keys list`
 
-### PDA 计算
+### PDA derivations
 ```typescript
 // Global PDA
 const [globalPda] = PublicKey.findProgramAddressSync(
@@ -243,13 +243,13 @@ const [treasuryPda] = PublicKey.findProgramAddressSync(
 
 ---
 
-## 🐛 常见问题
+## 🐛 Troubleshooting
 
-### 1. "Account does not exist" 错误
+### 1. "Account does not exist" error
 
-**原因**: Global 账户未初始化
+**Cause**: Global account not initialized
 
-**解决**: 先运行初始化脚本
+**Fix**: Run initialization scripts
 ```bash
 # Devnet
 yarn init-with-tusdc
@@ -258,30 +258,30 @@ yarn init-with-tusdc
 yarn init-mainnet
 ```
 
-### 2. "Insufficient SOL" 错误
+### 2. "Insufficient SOL" error
 
-**原因**: 余额不足
+**Cause**: Balance too low
 
-**解决**: 
+**Fix**:
 ```bash
 # Devnet
 solana airdrop 2
 
 # Mainnet
-# 从交易所转账 SOL
+# Transfer SOL from an exchange
 ```
 
-### 3. "Already initialized" 警告
+### 3. "Already initialized" warning
 
-**原因**: 账户已存在
+**Cause**: Account already exists
 
-**解决**: 这是正常的，脚本会跳过已初始化的账户
+**Fix**: This is expected; the script skips initialized accounts.
 
-### 4. RPC Rate Limit
+### 4. RPC rate limits
 
-**原因**: 使用公共 RPC 有请求限制
+**Cause**: Public RPC rate limits
 
-**解决**: 使用付费 RPC 服务
+**Fix**: Use a paid RPC provider
 ```bash
 # Helius
 export ANCHOR_PROVIDER_URL=https://mainnet.helius-rpc.com/?api-key=YOUR_KEY
@@ -293,39 +293,39 @@ export ANCHOR_PROVIDER_URL=https://your-endpoint.quiknode.pro/YOUR_KEY/
 export ANCHOR_PROVIDER_URL=https://solana-mainnet.g.alchemy.com/v2/YOUR_KEY
 ```
 
-### 5. "Not the authority" 错误
+### 5. "Not the authority" error
 
-**原因**: 当前钱包不是 Global 账户的 authority
+**Cause**: Current wallet is not the Global authority
 
-**解决**: 切换到正确的部署钱包
+**Fix**: Switch to the correct deployer wallet
 ```bash
 solana config set --keypair <correct-keypair.json>
 ```
 
 ---
 
-## 📚 相关文档
+## 📚 Related Docs
 
-- [主网部署指南](../MAINNET_DEPLOYMENT.md)
-- [部署文档](../DEPLOYMENT.md)
-- [非活跃终止指南](../INACTIVITY_TERMINATION_GUIDE.md)
-
----
-
-## 🆘 获取帮助
-
-如果遇到问题：
-1. 检查日志中的错误信息
-2. 运行 `yarn check-config` 查看当前状态
-3. 查看 Solana Explorer 确认交易状态
-4. 阅读相关文档
+- [Mainnet deployment guide](../MAINNET_DEPLOYMENT.md)
+- [Deployment docs](../DEPLOYMENT.md)
+- [Inactivity termination guide](../INACTIVITY_TERMINATION_GUIDE.md)
 
 ---
 
-## ⚡ 快速参考
+## 🆘 Need help?
+
+If you run into issues:
+1. Check logs for error messages
+2. Run `yarn check-config` to verify current state
+3. Check transaction status in Solana Explorer
+4. Review the related docs
+
+---
+
+## ⚡ Quick Reference
 
 ```bash
-# Devnet 完整流程
+# Devnet full flow
 yarn create-test-usdc
 yarn init-with-tusdc
 yarn init-platform-treasury
@@ -333,7 +333,7 @@ yarn init-treasury
 yarn check-config
 yarn mint-test-usdc 10000
 
-# Mainnet 完整流程
+# Mainnet full flow
 export ANCHOR_PROVIDER_URL=https://api.mainnet-beta.solana.com
 export ANCHOR_WALLET=~/.config/solana/mainnet-deployer.json
 yarn init-mainnet
@@ -341,4 +341,4 @@ yarn init-mainnet
 
 ---
 
-**祝部署顺利！🚀**
+**Good luck with your deployment!**
