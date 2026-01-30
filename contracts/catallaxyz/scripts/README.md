@@ -2,189 +2,151 @@
 
 This folder contains all initialization and admin scripts for Catallaxyz.
 
+## ⚡ Configuration
+
+**所有脚本现在从 `Anchor.toml` 自动读取配置，无需设置环境变量！**
+
+```toml
+# Anchor.toml
+[provider]
+cluster = "devnet"                           # 或 "mainnet", "localnet"
+wallet = "~/.config/solana/id.json"          # 钱包路径
+```
+
+如果设置了环境变量 (`ANCHOR_PROVIDER_URL`, `ANCHOR_WALLET`)，则优先使用环境变量。
+
+### 可选环境变量
+
+| 变量 | 用途 | 默认值 |
+|------|------|--------|
+| `TEST_USDC_MINT` | Devnet 测试 USDC Mint 地址 | 必需（devnet 初始化） |
+| `SETTLEMENT_SIGNER_PUBLIC_KEY` | 结算签名者公钥 | 使用钱包公钥 |
+| `KEEPER_PUBLIC_KEY` | Keeper 公钥（可选） | 无 |
+
+---
+
 ## 📋 Script Overview
 
-### Initialization Scripts
+### 初始化脚本（整合版）
 
 | Script | Purpose | Network | Command |
 |------|------|------|------|
-| `create-test-usdc.ts` | Create a test USDC mint | Devnet | `yarn create-test-usdc` |
-| `initialize-with-tusdc.ts` | Initialize Global with test USDC | Devnet | `yarn init-with-tusdc` |
-| `initialize-platform-treasury.ts` | Initialize platform treasury | Devnet/Mainnet | `yarn init-platform-treasury` |
-| `initialize-reward-treasury.ts` | Initialize reward treasury | Devnet/Mainnet | `yarn init-reward-treasury` |
-| `initialize-creator-treasury.ts` | Initialize creator incentive treasury | Devnet/Mainnet | `yarn init-creator-treasury` |
-| `initialize-treasury.ts` | Initialize VRF treasury | Devnet/Mainnet | `yarn init-treasury` |
-| `initialize-mainnet.ts` | One-click mainnet initialization | **Mainnet** | `yarn init-mainnet` |
+| `create-test-usdc.ts` | 创建测试 USDC Mint | Devnet | `yarn ts-node scripts/create-test-usdc.ts` |
+| `initialize-devnet.ts` | **一键 Devnet 初始化** | Devnet | `TEST_USDC_MINT=<mint> yarn ts-node scripts/initialize-devnet.ts` |
+| `initialize-mainnet.ts` | **一键 Mainnet 初始化** | **Mainnet** | `yarn ts-node scripts/initialize-mainnet.ts` |
 
-### Admin Scripts
+### Admin 脚本
 
 | Script | Purpose | Command |
 |------|------|------|
-| `mint-test-usdc.ts` | Mint test USDC | `yarn mint-test-usdc <amount>` |
-| `mint-tusdc-to-user.ts` | Mint test USDC to a user | `yarn mint-tusdc-to <address> <amount>` |
-| `check-program-config.ts` | Check program configuration | `yarn check-config` |
-| `verify-security.ts` | Security verification | `yarn verify-security` |
+| `mint-test-usdc.ts` | 铸造测试 USDC | `yarn ts-node scripts/mint-test-usdc.ts <amount>` |
+| `mint-tusdc-to-user.ts` | 向指定用户铸造 USDC | `yarn ts-node scripts/mint-tusdc-to-user.ts <address> <amount>` |
+| `set-keeper.ts` | 设置 Keeper 地址 | `KEEPER_PUBLIC_KEY=<pubkey> yarn ts-node scripts/set-keeper.ts` |
+| `check-program-config.ts` | 检查程序配置 | `yarn ts-node scripts/check-program-config.ts` |
+| `verify-security.ts` | 安全性验证 | `yarn ts-node scripts/verify-security.ts` |
+| `sync-constants.ts` | 同步常量 | `yarn ts-node scripts/sync-constants.ts` |
 
 ---
 
-## 🚀 Devnet Initialization Flow
+## 🚀 Devnet 初始化流程
 
-### Step 1: Create test USDC
+### Step 1: 创建测试 USDC
 
 ```bash
-cd catallaxyz
-yarn create-test-usdc
+cd contracts/catallaxyz
+yarn ts-node scripts/create-test-usdc.ts
 ```
 
-This creates:
-- A new tUSDC mint (6 decimals)
-- A config file saved to `test-usdc-config.json`
+输出会显示 Mint 地址，保存到 `test-usdc-config.json`
 
-### Step 2: Initialize Global
+### Step 2: 一键初始化所有账户
 
 ```bash
-yarn init-with-tusdc
+TEST_USDC_MINT=<上一步的mint地址> yarn ts-node scripts/initialize-devnet.ts
 ```
 
-This:
-- Initializes the Global account with tUSDC
-- Sets authority to the current wallet
+这个脚本会自动初始化：
+1. ✅ Global 账户（使用测试 USDC）
+2. ✅ Platform Treasury（平台金库）
+3. ✅ Reward Treasury（奖励金库）
+4. ✅ Creator Treasury（创作者金库）
+5. ✅ VRF Treasury（VRF 金库）
 
-### Step 3: Initialize Platform Treasury
+### Step 3: 验证配置
 
 ```bash
-yarn init-platform-treasury
+yarn ts-node scripts/check-program-config.ts
 ```
 
-This:
-- Creates the platform treasury token account
-- Collects trading fees and creation fees
-
-### Step 4: Initialize Reward Treasury
+### Step 4: 铸造测试 USDC（可选）
 
 ```bash
-yarn init-reward-treasury
-```
+# 给自己铸造 10,000 tUSDC
+yarn ts-node scripts/mint-test-usdc.ts 10000
 
-This:
-- Creates the reward treasury token account
-- Funds liquidity rewards
-
-### Step 5: Initialize Creator Treasury
-
-```bash
-yarn init-creator-treasury
-```
-
-This:
-- Creates the creator treasury token account
-- Collects creator incentives
-
-### Step 6: Initialize VRF Treasury
-
-```bash
-yarn init-treasury
-```
-
-This:
-- Creates the VRF treasury token account
-- Pays VRF-related fees
-
-### Step 7: Verify configuration
-
-```bash
-yarn check-config
-```
-
-Confirm all accounts are initialized correctly.
-
-### Step 8: Mint test USDC
-
-```bash
-# Mint 10,000 tUSDC to yourself
-yarn mint-test-usdc 10000
-
-# Mint to another user
-yarn mint-tusdc-to <user-address> 1000
+# 给其他用户铸造
+yarn ts-node scripts/mint-tusdc-to-user.ts <user-address> 1000
 ```
 
 ---
 
-## 🌐 Mainnet Initialization Flow
+## 🌐 Mainnet 初始化流程
 
-### ⚠️ Important
+### ⚠️ 重要提醒
 
-**Mainnet deployment is irreversible. Make sure to:**
-1. Complete a code audit
-2. Test thoroughly on Devnet
-3. Prepare at least 10 SOL
-4. Back up keys
-5. Use hardware wallet or multisig (recommended)
+**Mainnet 部署不可逆！请确保：**
+1. 完成代码审计
+2. 在 Devnet 充分测试
+3. 准备至少 10 SOL
+4. 备份密钥
+5. 使用硬件钱包或多签（推荐）
 
-### Environment setup
+### 配置
 
 ```bash
-# 1. Configure Solana CLI
-solana config set --url https://api.mainnet-beta.solana.com
-solana config set --keypair ~/.config/solana/mainnet-deployer.json
+# 1. 更新 Anchor.toml
+# [provider]
+# cluster = "mainnet"
+# wallet = "~/.config/solana/mainnet-deployer.json"
 
-# 2. Check balance
+# 或使用付费 RPC（推荐）:
+# cluster = "https://mainnet.helius-rpc.com/?api-key=YOUR_KEY"
+
+# 2. 检查余额
 solana balance
-# Ensure at least 5-10 SOL
-
-# 3. Configure environment variables (paid RPC recommended)
-export ANCHOR_PROVIDER_URL=https://mainnet.helius-rpc.com/?api-key=YOUR_KEY
-export ANCHOR_WALLET=~/.config/solana/mainnet-deployer.json
+# 确保至少有 5-10 SOL
 ```
 
-### Option 1: One-click initialization (recommended)
+### 一键初始化
 
 ```bash
-cd catallaxyz
-yarn init-mainnet
+yarn ts-node scripts/initialize-mainnet.ts
 ```
 
-This script performs:
-1. ✅ Network and balance checks
-2. ✅ Program deployment verification
-3. ✅ Global initialization (with real USDC)
-4. ✅ Platform treasury initialization
-5. ✅ VRF treasury initialization
-6. ✅ Final verification
+脚本会自动：
+1. ✅ 检查网络和余额
+2. ✅ 验证程序部署
+3. ✅ 初始化 Global（使用真实 USDC）
+4. ✅ 初始化所有金库
+5. ✅ 最终验证
 
-**Script highlights:**
-- 10-second confirmation delay
-- Auto-detects already-initialized accounts
-- Robust error handling
-- Detailed logs
-
-### Option 2: Manual step-by-step initialization
-
-If you want more control, run steps individually:
-
-```bash
-# 1. Edit initialize-with-tusdc.ts
-# Replace the tUSDC mint with mainnet USDC:
-# EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v
-
-# 2. Run the steps
-yarn init-with-tusdc
-yarn init-platform-treasury
-yarn init-treasury
-yarn check-config
-```
+**脚本特点：**
+- 10 秒确认延迟
+- 自动检测已初始化账户
+- 健壮的错误处理
+- 详细日志
 
 ---
 
-## 🔍 Checks and Verification
+## 🔍 检查和验证
 
-### Check program configuration
+### 检查程序配置
 
 ```bash
-yarn check-config
+yarn ts-node scripts/check-program-config.ts
 ```
 
-Example output:
+示例输出：
 ```
 ✅ Global Account
    Authority: 7xK...abc
@@ -193,34 +155,35 @@ Example output:
 ✅ Platform Treasury
    Balance: 0 USDC
 
+✅ Reward Treasury
+   Balance: 0 USDC
+
+✅ Creator Treasury
+   Balance: 0 USDC
+
 ✅ VRF Treasury
    Balance: 0 USDC
 ```
 
-### Security verification
+### 安全验证
 
 ```bash
-yarn verify-security
+yarn ts-node scripts/verify-security.ts
 ```
-
-Checklist:
-- ✅ Authority configuration
-- ✅ Treasury initialization
-- ✅ Access control
-- ✅ Fee configuration
 
 ---
 
-## 📝 Important Addresses
+## 📝 重要地址
 
 ### Devnet
-- tUSDC Mint: stored in `test-usdc-config.json`
+- tUSDC Mint: 存储在 `test-usdc-config.json`
 
 ### Mainnet
 - USDC Mint: `EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v`
-- Program ID: run `anchor keys list`
+- Program ID: 运行 `anchor keys list`
 
-### PDA derivations
+### PDA 推导
+
 ```typescript
 // Global PDA
 const [globalPda] = PublicKey.findProgramAddressSync(
@@ -234,6 +197,18 @@ const [platformTreasuryPda] = PublicKey.findProgramAddressSync(
   programId
 );
 
+// Reward Treasury PDA
+const [rewardTreasuryPda] = PublicKey.findProgramAddressSync(
+  [Buffer.from("reward_treasury")],
+  programId
+);
+
+// Creator Treasury PDA
+const [creatorTreasuryPda] = PublicKey.findProgramAddressSync(
+  [Buffer.from("creator_treasury")],
+  programId
+);
+
 // VRF Treasury PDA
 const [treasuryPda] = PublicKey.findProgramAddressSync(
   [Buffer.from("treasury")],
@@ -243,102 +218,71 @@ const [treasuryPda] = PublicKey.findProgramAddressSync(
 
 ---
 
-## 🐛 Troubleshooting
+## 🐛 故障排除
 
-### 1. "Account does not exist" error
+### 1. "Account does not exist" 错误
 
-**Cause**: Global account not initialized
+**原因**: Global 账户未初始化
 
-**Fix**: Run initialization scripts
+**解决**:
 ```bash
 # Devnet
-yarn init-with-tusdc
+TEST_USDC_MINT=<mint> yarn ts-node scripts/initialize-devnet.ts
 
 # Mainnet
-yarn init-mainnet
+yarn ts-node scripts/initialize-mainnet.ts
 ```
 
-### 2. "Insufficient SOL" error
+### 2. "Insufficient SOL" 错误
 
-**Cause**: Balance too low
+**原因**: SOL 余额不足
 
-**Fix**:
+**解决**:
 ```bash
 # Devnet
 solana airdrop 2
 
 # Mainnet
-# Transfer SOL from an exchange
+# 从交易所转账 SOL
 ```
 
-### 3. "Already initialized" warning
+### 3. "Already initialized" 警告
 
-**Cause**: Account already exists
+**原因**: 账户已存在
 
-**Fix**: This is expected; the script skips initialized accounts.
+**解决**: 这是预期行为，脚本会跳过已初始化的账户。
 
-### 4. RPC rate limits
+### 4. RPC 限流
 
-**Cause**: Public RPC rate limits
+**原因**: 公共 RPC 限制
 
-**Fix**: Use a paid RPC provider
+**解决**: 使用付费 RPC 提供商
 ```bash
 # Helius
 export ANCHOR_PROVIDER_URL=https://mainnet.helius-rpc.com/?api-key=YOUR_KEY
 
 # QuickNode
 export ANCHOR_PROVIDER_URL=https://your-endpoint.quiknode.pro/YOUR_KEY/
-
-# Alchemy
-export ANCHOR_PROVIDER_URL=https://solana-mainnet.g.alchemy.com/v2/YOUR_KEY
-```
-
-### 5. "Not the authority" error
-
-**Cause**: Current wallet is not the Global authority
-
-**Fix**: Switch to the correct deployer wallet
-```bash
-solana config set --keypair <correct-keypair.json>
 ```
 
 ---
 
-## 📚 Related Docs
-
-- [Mainnet deployment guide](../MAINNET_DEPLOYMENT.md)
-- [Deployment docs](../DEPLOYMENT.md)
-- [Inactivity termination guide](../INACTIVITY_TERMINATION_GUIDE.md)
-
----
-
-## 🆘 Need help?
-
-If you run into issues:
-1. Check logs for error messages
-2. Run `yarn check-config` to verify current state
-3. Check transaction status in Solana Explorer
-4. Review the related docs
-
----
-
-## ⚡ Quick Reference
+## ⚡ 快速参考
 
 ```bash
-# Devnet full flow
-yarn create-test-usdc
-yarn init-with-tusdc
-yarn init-platform-treasury
-yarn init-treasury
-yarn check-config
-yarn mint-test-usdc 10000
+# Devnet 完整流程
+yarn ts-node scripts/create-test-usdc.ts
+# 记录输出的 mint 地址
+TEST_USDC_MINT=<mint> yarn ts-node scripts/initialize-devnet.ts
+yarn ts-node scripts/check-program-config.ts
+yarn ts-node scripts/mint-test-usdc.ts 10000
 
-# Mainnet full flow
-export ANCHOR_PROVIDER_URL=https://api.mainnet-beta.solana.com
-export ANCHOR_WALLET=~/.config/solana/mainnet-deployer.json
-yarn init-mainnet
+# Mainnet 完整流程
+# 1. 更新 Anchor.toml: cluster = "mainnet"
+# 2. 运行:
+yarn ts-node scripts/initialize-mainnet.ts
 ```
 
 ---
 
-**Good luck with your deployment!**
+**祝部署顺利！**

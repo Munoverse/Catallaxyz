@@ -6,6 +6,7 @@ import {
 } from "@solana/spl-token";
 import { Connection, Keypair, PublicKey } from "@solana/web3.js";
 import * as fs from "fs";
+import { getConnection, loadWallet, getAnchorConfig, printConfig } from "./utils/anchor-config.js";
 
 /**
  * Mint tUSDC to specified user
@@ -41,28 +42,15 @@ async function main() {
     process.exit(1);
   }
 
-  const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
-  const mintAddress = new PublicKey(config.testUsdcMint);
+  const usdcConfig = JSON.parse(fs.readFileSync(configPath, "utf8"));
+  const mintAddress = new PublicKey(usdcConfig.testUsdcMint);
   const userAddress = new PublicKey(userWallet);
 
-  // Setup connection
-  const connection = new Connection(
-    process.env.ANCHOR_PROVIDER_URL || "https://api.devnet.solana.com",
-    "confirmed"
-  );
-
-  // Load mint authority wallet (must be the wallet that created tUSDC)
-  const walletPath = process.env.ANCHOR_WALLET || "~/.config/solana/id.json";
-  const walletFile = walletPath.replace("~", process.env.HOME || "");
-  
-  if (!fs.existsSync(walletFile)) {
-    console.log("❌ Wallet file does not exist:", walletFile);
-    console.log("   Please set ANCHOR_WALLET environment variable or ensure ~/.config/solana/id.json exists");
-    process.exit(1);
-  }
-
-  const secretKey = JSON.parse(fs.readFileSync(walletFile, "utf8"));
-  const payer = Keypair.fromSecretKey(Uint8Array.from(secretKey));
+  // Setup from Anchor.toml
+  printConfig();
+  const anchorConfig = getAnchorConfig();
+  const connection = getConnection();
+  const payer = loadWallet(anchorConfig.walletPath);
 
   console.log("🔑 Mint Authority:", payer.publicKey.toString());
   console.log("👤 Target User:", userAddress.toString());

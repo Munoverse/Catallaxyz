@@ -4,6 +4,7 @@ import {
   mintTo,
 } from "@solana/spl-token";
 import * as fs from "fs";
+import { getConnection, loadWallet, getAnchorConfig, printConfig } from "./utils/anchor-config.js";
 
 /**
  * Mint Twish tokens to your wallet or specified address
@@ -15,27 +16,21 @@ import * as fs from "fs";
 async function main() {
   const args = process.argv.slice(2);
   
-  // Load config
+  // Load twish config
   const configPath = "twish-config.json";
   if (!fs.existsSync(configPath)) {
     console.error("❌ twish-config.json not found. Run 'yarn create-twish' first.");
     process.exit(1);
   }
   
-  const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
-  const mint = new PublicKey(config.twishMint);
+  const twishConfig = JSON.parse(fs.readFileSync(configPath, "utf8"));
+  const mint = new PublicKey(twishConfig.twishMint);
   
-  // Setup connection
-  const connection = new Connection(
-    process.env.ANCHOR_PROVIDER_URL || "https://api.devnet.solana.com",
-    "confirmed"
-  );
-
-  // Load wallet (mint authority)
-  const walletPath = process.env.ANCHOR_WALLET || "~/.config/solana/id.json";
-  const walletFile = walletPath.replace("~", process.env.HOME || "");
-  const secretKey = JSON.parse(fs.readFileSync(walletFile, "utf8"));
-  const authority = Keypair.fromSecretKey(Uint8Array.from(secretKey));
+  // Setup from Anchor.toml
+  printConfig();
+  const anchorConfig = getAnchorConfig();
+  const connection = getConnection();
+  const authority = loadWallet(anchorConfig.walletPath);
 
   // Determine recipient and amount
   let recipient: PublicKey;

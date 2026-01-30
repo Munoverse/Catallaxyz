@@ -5,6 +5,10 @@ pub struct Global {
     pub authority: Pubkey,
     pub usdc_mint: Pubkey,
     pub settlement_signer: Pubkey,
+    /// Keeper wallet for automated tasks (terminating inactive markets)
+    /// Can be set to a different wallet than authority for separation of concerns
+    /// If set to Pubkey::default(), only authority can perform keeper tasks
+    pub keeper: Pubkey,
     pub bump: u8,
     pub treasury_bump: u8, // VRF treasury bump (for Switchboard fees)
     pub platform_treasury_bump: u8, // Platform treasury bump (for trading & creation fees)
@@ -42,12 +46,17 @@ pub struct Global {
 
 impl Global {
     // Space calculation:
-    // discriminator(8) + authority(32) + usdc_mint(32) + settlement_signer(32)
+    // discriminator(8) + authority(32) + usdc_mint(32) + settlement_signer(32) + keeper(32)
     // + bump(1) + treasury_bump(1) + platform_treasury_bump(1)
     // + total_fees_collected(8) + total_trading_fees_collected(8) + total_creation_fees_collected(8)
     // + center_taker_fee_rate(4) + extreme_taker_fee_rate(4)
     // + platform_fee_rate(4) + maker_rebate_rate(4) + creator_incentive_rate(4)
-    pub const INIT_SPACE: usize = 8 + 32 + 32 + 32 + 1 + 1 + 1 + 8 + 8 + 8 + 4 + 4 + 4 + 4 + 4;
+    pub const INIT_SPACE: usize = 8 + 32 + 32 + 32 + 32 + 1 + 1 + 1 + 8 + 8 + 8 + 4 + 4 + 4 + 4 + 4;
+
+    /// Check if the given pubkey is authorized as keeper (authority or designated keeper)
+    pub fn is_keeper(&self, pubkey: &Pubkey) -> bool {
+        *pubkey == self.authority || (*pubkey == self.keeper && self.keeper != Pubkey::default())
+    }
 
     /// Calculate taker fee rate based on price using smooth curve
     /// 

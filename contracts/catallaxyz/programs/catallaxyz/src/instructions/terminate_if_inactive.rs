@@ -1,6 +1,6 @@
 use anchor_lang::prelude::*;
 use anchor_spl::token_interface::{self as token_interface, TokenAccount, TokenInterface, TransferChecked};
-use crate::constants::{GLOBAL_SEED, PLATFORM_TREASURY_SEED, CREATOR_TREASURY_SEED, PRICE_SCALE, TERMINATION_EXECUTION_REWARD_USDC};
+use crate::constants::{GLOBAL_SEED, CREATOR_TREASURY_SEED, PRICE_SCALE};
 use crate::errors::TerminatorError;
 use crate::events::MarketTerminated;
 use crate::states::{global::Global, Market};
@@ -8,12 +8,13 @@ use crate::states::{global::Global, Market};
 /// Terminate a market if it has been inactive for >= 7 days.
 ///
 /// Notes:
-/// - Solana programs can't run automatically; this instruction is admin-only and must be
-///   called by the global authority (backend/ops) to finalize an inactive market.
+/// - Solana programs can't run automatically; this instruction must be called by
+///   the global authority or designated keeper to finalize an inactive market.
 /// - Final prices are taken from the market's last observed trade/order price (best-effort).
+/// - No execution reward is paid; this is an automated keeper task.
 #[derive(Accounts)]
 pub struct TerminateIfInactive<'info> {
-    /// Global state (for treasury authority)
+    /// Global state (for keeper/authority check)
     #[account(
         mut,
         seeds = [GLOBAL_SEED.as_bytes()],
@@ -21,11 +22,11 @@ pub struct TerminateIfInactive<'info> {
     )]
     pub global: Box<Account<'info, Global>>,
 
-    /// Global authority (admin)
+    /// Keeper or authority (either can call this instruction)
     #[account(
-        constraint = authority.key() == global.authority @ TerminatorError::Unauthorized
+        constraint = global.is_keeper(&caller.key()) @ TerminatorError::Unauthorized
     )]
-    pub authority: Signer<'info>,
+    pub caller: Signer<'info>,
 
     #[account(
         mut,
@@ -43,14 +44,6 @@ pub struct TerminateIfInactive<'info> {
     )]
     pub market_usdc_vault: Box<InterfaceAccount<'info, TokenAccount>>,
 
-    /// Platform treasury (USDC) - used to reimburse termination execution
-    #[account(
-        mut,
-        seeds = [PLATFORM_TREASURY_SEED.as_bytes()],
-        bump = global.platform_treasury_bump
-    )]
-    pub platform_treasury: Box<InterfaceAccount<'info, TokenAccount>>,
-
     /// Creator treasury (holds creator incentives)
     #[account(
         mut,
@@ -67,19 +60,10 @@ pub struct TerminateIfInactive<'info> {
     )]
     pub creator_usdc_account: Box<InterfaceAccount<'info, TokenAccount>>,
 
-    /// Admin USDC token account (receives reward)
-    #[account(
-        mut,
-        constraint = caller_usdc_account.owner == authority.key(),
-        constraint = caller_usdc_account.mint == global.usdc_mint
-    )]
-    pub caller_usdc_account: Box<InterfaceAccount<'info, TokenAccount>>,
-
     /// USDC mint account
     pub usdc_mint: Box<InterfaceAccount<'info, token_interface::Mint>>,
 
     pub token_program: Interface<'info, TokenInterface>,
-
 }
 
 pub fn handler(ctx: Context<TerminateIfInactive>) -> Result<()> {
@@ -90,14 +74,11 @@ pub fn handler(ctx: Context<TerminateIfInactive>) -> Result<()> {
     
     // Get account infos before mutable borrows
     let global_info = ctx.accounts.global.to_account_info();
-    let platform_treasury_info = ctx.accounts.platform_treasury.to_account_info();
     let creator_treasury_info = ctx.accounts.creator_treasury.to_account_info();
-    let caller_usdc_info = ctx.accounts.caller_usdc_account.to_account_info();
     let creator_usdc_info = ctx.accounts.creator_usdc_account.to_account_info();
     let usdc_mint_info = ctx.accounts.usdc_mint.to_account_info();
     let token_program_info = ctx.accounts.token_program.to_account_info();
     let usdc_decimals = ctx.accounts.usdc_mint.decimals;
-    let treasury_balance = ctx.accounts.platform_treasury.amount;
     let vault_balance = ctx.accounts.market_usdc_vault.amount;
     let creator_treasury_balance = ctx.accounts.creator_treasury.amount;
     
@@ -129,41 +110,6 @@ pub fn handler(ctx: Context<TerminateIfInactive>) -> Result<()> {
     let yes_price = market.final_yes_price.unwrap_or(PRICE_SCALE / 2);
     let no_price = market.final_no_price.unwrap_or(PRICE_SCALE / 2);
     let creator_accrued = market.creator_incentive_accrued;
-
-    // Reimburse caller for termination execution from platform treasury (USDC)
-    if TERMINATION_EXECUTION_REWARD_USDC > 0 {
-        if treasury_balance < TERMINATION_EXECUTION_REWARD_USDC {
-            msg!("Platform treasury balance insufficient; skipping termination reward");
-        } else {
-            let signer_seeds: &[&[u8]] = &[
-                GLOBAL_SEED.as_bytes(),
-                &[global_bump],
-            ];
-            let signer_seeds_array = &[signer_seeds];
-
-            let cpi_accounts = TransferChecked {
-                from: platform_treasury_info.clone(),
-                to: caller_usdc_info,
-                mint: usdc_mint_info.clone(),
-                authority: global_info.clone(),
-            };
-
-            let cpi_ctx = CpiContext::new_with_signer(
-                token_program_info.clone(),
-                cpi_accounts,
-                signer_seeds_array,
-            );
-
-            token_interface::transfer_checked(
-                cpi_ctx,
-                TERMINATION_EXECUTION_REWARD_USDC,
-                usdc_decimals,
-            )?;
-            // AUDIT FIX: Reload accounts after CPI to ensure data consistency
-            ctx.accounts.platform_treasury.reload()?;
-            ctx.accounts.caller_usdc_account.reload()?;
-        }
-    }
 
     // Pay creator incentive on termination (best-effort)
     if creator_accrued > 0 {
@@ -212,4 +158,3 @@ pub fn handler(ctx: Context<TerminateIfInactive>) -> Result<()> {
 
     Ok(())
 }
-

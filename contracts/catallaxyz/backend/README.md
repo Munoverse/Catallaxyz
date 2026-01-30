@@ -1,6 +1,15 @@
-# Backend Admin Jobs
+# Backend Admin Jobs (DEPRECATED)
 
-This folder contains backend/ops scripts that must be run by the global authority wallet.
+> **⚠️ DEPRECATED**: This folder contains legacy admin scripts. 
+> The main backend at `/apps/backend/` now handles all these functions with better:
+> - Error handling
+> - Logging
+> - API integration
+> - Cron scheduling
+>
+> **Recommended**: Use `apps/backend` instead of these scripts.
+
+This folder contains legacy backend/ops scripts that must be run by the global authority wallet.
 
 ## Inactivity Termination
 

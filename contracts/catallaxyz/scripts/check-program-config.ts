@@ -3,6 +3,7 @@ import { Program } from "@coral-xyz/anchor";
 import { Connection, PublicKey } from "@solana/web3.js";
 import * as fs from "fs";
 import type { Catallaxyz } from "../target/types/catallaxyz";
+import { setupProvider, getAnchorConfig, printConfig } from "./utils/anchor-config.js";
 
 /**
  * Check the current configuration of the program
@@ -15,11 +16,11 @@ import type { Catallaxyz } from "../target/types/catallaxyz";
 async function main() {
   console.log("🔍 Checking Catallaxyz program configuration...\n");
 
-  // Setup connection
-  const connection = new Connection(
-    process.env.ANCHOR_PROVIDER_URL || "https://api.devnet.solana.com",
-    "confirmed"
-  );
+  // Setup provider (reads from Anchor.toml)
+  printConfig();
+  const provider = setupProvider();
+  const connection = provider.connection;
+  const config = getAnchorConfig();
 
   // Load program IDL
   const idlPath = "./target/idl/catallaxyz.json";
@@ -33,11 +34,10 @@ async function main() {
 
   console.log("📋 Program Information:");
   console.log("   Program ID:", programId.toString());
-  console.log("   Network:", process.env.ANCHOR_PROVIDER_URL || "devnet");
+  console.log("   Network:", config.cluster);
   console.log("");
 
   // Create program instance
-  const provider = anchor.AnchorProvider.env();
   const program = new Program(idl, provider) as Program<Catallaxyz>;
 
   // Calculate Global PDA

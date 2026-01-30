@@ -3,6 +3,7 @@ import { Program } from "@coral-xyz/anchor";
 import { PublicKey, SystemProgram } from "@solana/web3.js";
 import * as fs from "fs";
 import type { Catallaxyz } from "../target/types/catallaxyz";
+import { setupProvider, printConfig } from "./utils/anchor-config.js";
 
 /**
  * Initialize Catallaxyz program with tUSDC
@@ -12,12 +13,19 @@ import type { Catallaxyz } from "../target/types/catallaxyz";
  * 2. Initialize Global account using tUSDC as base token
  * 3. Verify initialization results
  * 
+ * Optional environment variables:
+ * - SETTLEMENT_SIGNER_PUBLIC_KEY: Override the settlement signer (defaults to wallet)
+ * 
  * Usage:
  *   yarn ts-node scripts/initialize-with-tusdc.ts
  */
 
 async function main() {
   console.log("🚀 Starting Catallaxyz program initialization (using tUSDC)\n");
+
+  // Setup provider (reads from Anchor.toml)
+  printConfig();
+  const provider = setupProvider();
 
   // Check if test-usdc-config.json exists
   const configPath = "./test-usdc-config.json";
@@ -31,6 +39,8 @@ async function main() {
   // Read tUSDC config
   const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
   const tUsdcMint = new PublicKey(config.testUsdcMint);
+  
+  // Settlement signer (optional env override)
   const settlementSigner = new PublicKey(
     process.env.SETTLEMENT_SIGNER_PUBLIC_KEY || provider.wallet.publicKey.toString()
   );
@@ -40,10 +50,6 @@ async function main() {
   console.log("   tUSDC Mint:", tUsdcMint.toString());
   console.log("   Decimals:", config.decimals);
   console.log("");
-
-  // Setup provider
-  const provider = anchor.AnchorProvider.env();
-  anchor.setProvider(provider);
   
   console.log("🔑 Authority:", provider.wallet.publicKey.toString());
   console.log("");
@@ -118,10 +124,21 @@ async function main() {
   try {
     // Initialize program
     console.log("📝 Sending initialization transaction...");
+    
+    // Check for optional keeper from environment
+    const keeperEnv = process.env.KEEPER_PUBLIC_KEY;
+    const keeper = keeperEnv ? new PublicKey(keeperEnv) : null;
+    if (keeper) {
+      console.log("   Keeper:", keeper.toString());
+    } else {
+      console.log("   Keeper: (defaults to authority)");
+    }
+    
     const tx = await program.methods
         .initialize({
           usdcMint: tUsdcMint,
           settlementSigner,
+          keeper,
         })
       .accountsStrict({
         authority: provider.wallet.publicKey,

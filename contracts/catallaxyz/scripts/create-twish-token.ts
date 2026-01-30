@@ -7,6 +7,7 @@ import {
 } from "@solana/spl-token";
 import { Connection, Keypair } from "@solana/web3.js";
 import * as fs from "fs";
+import { getConnection, loadWallet, getAnchorConfig, printConfig } from "./utils/anchor-config.js";
 
 /**
  * Create Twish token on devnet for tipping functionality
@@ -18,17 +19,11 @@ import * as fs from "fs";
  */
 
 async function main() {
-  // Setup connection
-  const connection = new Connection(
-    process.env.ANCHOR_PROVIDER_URL || "https://api.devnet.solana.com",
-    "confirmed"
-  );
-
-  // Load wallet
-  const walletPath = process.env.ANCHOR_WALLET || "~/.config/solana/id.json";
-  const walletFile = walletPath.replace("~", process.env.HOME || "");
-  const secretKey = JSON.parse(fs.readFileSync(walletFile, "utf8"));
-  const payer = Keypair.fromSecretKey(Uint8Array.from(secretKey));
+  // Setup from Anchor.toml
+  printConfig();
+  const config = getAnchorConfig();
+  const connection = getConnection();
+  const payer = loadWallet(config.walletPath);
 
   console.log("🔑 Payer:", payer.publicKey.toString());
 

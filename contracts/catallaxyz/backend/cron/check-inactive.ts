@@ -1,7 +1,8 @@
+import { Transaction } from "@solana/web3.js";
 import {
   DEFAULT_INACTIVITY_SECONDS,
   deriveGlobalPda,
-  executeTermination,
+  buildTerminationInstruction,
   getProgram,
   readTerminationLog,
   writeTerminationLog,
@@ -17,6 +18,11 @@ const logger = createLogger('check-inactive');
 
 // AUDIT FIX: Validate environment variables at startup
 validateServiceEnv('checkInactive');
+
+// Default batch size for bundling multiple terminations into one transaction
+// Max ~8 due to Solana transaction size/account limits (tested safe: 4-6)
+const DEFAULT_BATCH_SIZE = 4;
+const MAX_BATCH_SIZE = 8;
 
 async function main() {
   // AUDIT FIX v1.2.6: Use parseBool/parseNum directly from env-validation
@@ -47,6 +53,11 @@ async function main() {
     10,
     { min: 0 }
   );
+  const batchSize = parseNum(
+    "BATCH_SIZE",
+    DEFAULT_BATCH_SIZE,
+    { min: 1, max: MAX_BATCH_SIZE }
+  );
   const dryRun = parseBool("DRY_RUN", true);
 
   const markets = await program.account.market.all();
@@ -68,57 +79,137 @@ async function main() {
   // AUDIT FIX v1.1.0: Use structured logging
   logger.info("Found inactive markets", { count: candidates.length });
 
+  // Limit to maxTerminations
+  const toTerminate = candidates.slice(0, maxTerminations);
+  
+  if (toTerminate.length === 0) {
+    logger.info("No markets to terminate");
+    return;
+  }
+
+  // Validate all candidates first
+  const validCandidates = toTerminate.filter((marketInfo) => {
+    const marketAccount = marketInfo.account as unknown as MarketAccount;
+    if (!marketAccount || typeof marketAccount.creator === 'undefined') {
+      logger.warn('Skipping market with invalid structure', { market: marketInfo.publicKey.toString() });
+      return false;
+    }
+    return true;
+  });
+
+  if (dryRun) {
+    logger.info("DRY_RUN=true, would terminate markets", { 
+      count: validCandidates.length,
+      markets: validCandidates.map(m => m.publicKey.toString())
+    });
+    return;
+  }
+
   let terminatedCount = 0;
   const logEntries = readTerminationLog();
 
-  for (const marketInfo of candidates) {
-    if (terminatedCount >= maxTerminations) {
-      break;
-    }
-
-    const market = marketInfo.publicKey;
-    // AUDIT FIX v1.2.0: Use proper type with runtime validation
-    const marketAccount = marketInfo.account as unknown as MarketAccount;
-    if (!marketAccount || typeof marketAccount.creator === 'undefined') {
-      logger.warn('Skipping market with invalid structure', { market: market.toString() });
-      continue;
-    }
-
-    logger.info("Processing inactive market", { market: market.toString() });
-
-    if (dryRun) {
-      logger.debug("DRY_RUN=true, skipping transaction");
-      continue;
-    }
+  // Process in batches
+  for (let i = 0; i < validCandidates.length; i += batchSize) {
+    const batch = validCandidates.slice(i, i + batchSize);
+    
+    logger.info("Processing batch", { 
+      batchNumber: Math.floor(i / batchSize) + 1,
+      batchSize: batch.length,
+      markets: batch.map(m => m.publicKey.toString())
+    });
 
     try {
-      const tx = await executeTermination({
-        program,
-        programId,
-        market,
-        globalPda,
-        globalAccount,
-        authority,
-        marketAccount,
+      // Build all instructions for this batch
+      const instructions = await Promise.all(
+        batch.map(async (marketInfo) => {
+          const market = marketInfo.publicKey;
+          const marketAccount = marketInfo.account as unknown as MarketAccount;
+          return buildTerminationInstruction({
+            program,
+            programId,
+            market,
+            globalPda,
+            globalAccount,
+            authority,
+            marketAccount,
+          });
+        })
+      );
+
+      // Create and send batch transaction
+      const tx = new Transaction();
+      instructions.forEach((ix) => tx.add(ix));
+
+      const signature = await provider.sendAndConfirm(tx);
+
+      logger.info("Batch termination successful", { 
+        batchSize: batch.length,
+        tx: signature,
+        markets: batch.map(m => m.publicKey.toString())
       });
 
-      logger.info("Termination successful", { market: market.toString(), tx });
-      logEntries.push({
-        market: market.toString(),
-        tx,
-        terminatedAt: new Date().toISOString(),
-        executor: authority.toString(),
-        reason: TerminationReason.Inactivity,
+      // Log each terminated market
+      const timestamp = new Date().toISOString();
+      batch.forEach((marketInfo) => {
+        logEntries.push({
+          market: marketInfo.publicKey.toString(),
+          tx: signature,
+          terminatedAt: timestamp,
+          executor: authority.toString(),
+          reason: TerminationReason.Inactivity,
+        });
       });
-      terminatedCount += 1;
+      
+      terminatedCount += batch.length;
     } catch (err) {
-      logger.error("Termination failed", err, { market: market.toString() });
+      logger.error("Batch termination failed", err, { 
+        markets: batch.map(m => m.publicKey.toString())
+      });
+      
+      // Fallback: try individual terminations for this batch
+      logger.info("Falling back to individual terminations for failed batch");
+      for (const marketInfo of batch) {
+        const market = marketInfo.publicKey;
+        const marketAccount = marketInfo.account as unknown as MarketAccount;
+        
+        try {
+          const ix = await buildTerminationInstruction({
+            program,
+            programId,
+            market,
+            globalPda,
+            globalAccount,
+            authority,
+            marketAccount,
+          });
+          
+          const singleTx = new Transaction().add(ix);
+          const signature = await provider.sendAndConfirm(singleTx);
+          
+          logger.info("Individual termination successful", { market: market.toString(), tx: signature });
+          logEntries.push({
+            market: market.toString(),
+            tx: signature,
+            terminatedAt: new Date().toISOString(),
+            executor: authority.toString(),
+            reason: TerminationReason.Inactivity,
+          });
+          terminatedCount += 1;
+        } catch (individualErr) {
+          logger.error("Individual termination failed", individualErr, { market: market.toString() });
+        }
+      }
     }
   }
 
-  if (!dryRun && terminatedCount > 0) {
+  if (terminatedCount > 0) {
     writeTerminationLog(logEntries);
   }
+
+  logger.info("Termination complete", { 
+    terminated: terminatedCount,
+    total: validCandidates.length
+  });
 }
 
 main()

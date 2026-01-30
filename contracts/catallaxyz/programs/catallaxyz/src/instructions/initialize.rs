@@ -6,6 +6,8 @@ use crate::states::global::{Global, default_fees};
 pub struct InitializeParams {
     pub usdc_mint: Pubkey,
     pub settlement_signer: Pubkey,
+    /// Optional keeper wallet for automated tasks. If None, defaults to authority.
+    pub keeper: Option<Pubkey>,
 }
 
 #[derive(Accounts)]
@@ -30,6 +32,8 @@ pub fn handler(ctx: Context<Initialize>, params: InitializeParams) -> Result<()>
     global.authority = ctx.accounts.authority.key();
     global.usdc_mint = params.usdc_mint;
     global.settlement_signer = params.settlement_signer;
+    // Set keeper to provided value or default to authority
+    global.keeper = params.keeper.unwrap_or(ctx.accounts.authority.key());
     global.bump = ctx.bumps.global;
     global.treasury_bump = 0; // Will be set by init_treasury
     global.platform_treasury_bump = 0; // Will be set by init_platform_treasury

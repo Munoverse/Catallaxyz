@@ -14,7 +14,7 @@ pub mod utils;
 #[allow(ambiguous_glob_reexports)]
 use instructions::*;
 
-declare_id!("FYs6iC1M84eiMZRe45uwmBt7PnZCMnG1XSjC1tgTy2kk");
+declare_id!("GEswHWjzyZz3XAD4fik2qMmSMwJykUEWJfVZL72QQ2yH");
 
 #[program]
 pub mod catallaxyz {
@@ -78,9 +78,17 @@ pub mod catallaxyz {
     }
 
     /// Terminate a market if it has been inactive for >= 7 days.
-    /// Admin only: global authority must call this.
+    /// Keeper or authority only.
+    /// Note: Batch termination is handled at the backend level by bundling
+    /// multiple terminateIfInactive instructions into a single transaction.
     pub fn terminate_if_inactive(ctx: Context<TerminateIfInactive>) -> Result<()> {
         instructions::terminate_if_inactive::handler(ctx)
+    }
+
+    /// Set or update the keeper wallet address.
+    /// Authority only.
+    pub fn set_keeper(ctx: Context<SetKeeper>, params: SetKeeperParams) -> Result<()> {
+        instructions::set_keeper::handler(ctx, params)
     }
 
     /// Split USDC into YES and NO positions for a SINGLE question

@@ -1,7 +1,7 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
-import { getAssociatedTokenAddressSync, TOKEN_PROGRAM_ID } from "@solana/spl-token";
+import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import * as fs from "fs";
 import * as path from "path";
 import type { Catallaxyz } from "../../target/types/catallaxyz";
@@ -10,6 +10,12 @@ import { TerminationReason } from "../../shared/types";
 import { createLogger } from "./logger";
 // AUDIT FIX v1.2.5: Import shared validation functions instead of duplicating
 import { parseBool, parseNum, validatePublicKey as validatePubKey } from "./env-validation";
+// Use shared PDA and ATA utilities
+import {
+  deriveGlobalPda as sharedDeriveGlobalPda,
+  deriveMarketPdas as sharedDeriveMarketPdas,
+  resolveUsdcAccounts as sharedResolveUsdcAccounts,
+} from "@catallaxyz/shared";
 
 // AUDIT FIX v1.1.2: Use structured logging
 const logger = createLogger('termination');
@@ -126,24 +132,9 @@ export const getProgram = (provider = anchor.AnchorProvider.env()) => {
   return { program, programId, provider };
 };
 
-export const deriveGlobalPda = (programId: PublicKey) =>
-  PublicKey.findProgramAddressSync([Buffer.from("global")], programId)[0];
-
-export const deriveMarketPdas = (programId: PublicKey, market: PublicKey) => {
-  const [marketUsdcVault] = PublicKey.findProgramAddressSync(
-    [Buffer.from("market_vault"), market.toBuffer()],
-    programId
-  );
-  const [platformTreasury] = PublicKey.findProgramAddressSync(
-    [Buffer.from("platform_treasury")],
-    programId
-  );
-  const [creatorTreasury] = PublicKey.findProgramAddressSync(
-    [Buffer.from("creator_treasury")],
-    programId
-  );
-  return { marketUsdcVault, platformTreasury, creatorTreasury };
-};
+// Re-export shared PDA utilities for backward compatibility
+export const deriveGlobalPda = sharedDeriveGlobalPda;
+export const deriveMarketPdas = sharedDeriveMarketPdas;
 
 // AUDIT FIX v1.2.6: Removed deprecated parseBooleanEnv and parseNumberEnv functions
 // Use parseBool and parseNum from env-validation.ts directly
@@ -184,6 +175,10 @@ type ResolveUsdcAccountsArgs = {
   adminOverride?: string;
 };
 
+/**
+ * Resolve USDC accounts using shared utility
+ * Wraps sharedResolveUsdcAccounts for backward compatibility (adminUsdcAccount alias)
+ */
 export const resolveUsdcAccounts = ({
   usdcMint,
   creator,
@@ -191,18 +186,15 @@ export const resolveUsdcAccounts = ({
   creatorOverride,
   adminOverride,
 }: ResolveUsdcAccountsArgs) => {
-  const creatorOverrideKey = parseOptionalPublicKey(creatorOverride, "CREATOR_USDC_ACCOUNT");
-  const adminOverrideKey = parseOptionalPublicKey(adminOverride, "ADMIN_USDC_ACCOUNT");
+  const { creatorUsdcAccount, authorityUsdcAccount } = sharedResolveUsdcAccounts({
+    usdcMint,
+    creator,
+    authority,
+    creatorOverride,
+    authorityOverride: adminOverride,
+  });
 
-  const creatorUsdcAccount = creatorOverrideKey
-    ? creatorOverrideKey
-    : getAssociatedTokenAddressSync(usdcMint, creator, false, TOKEN_PROGRAM_ID);
-
-  const adminUsdcAccount = adminOverrideKey
-    ? adminOverrideKey
-    : getAssociatedTokenAddressSync(usdcMint, authority, false, TOKEN_PROGRAM_ID);
-
-  return { creatorUsdcAccount, adminUsdcAccount };
+  return { creatorUsdcAccount, adminUsdcAccount: authorityUsdcAccount };
 };
 
 // ============================================
@@ -217,6 +209,56 @@ export type TerminateMarketArgs = {
   globalAccount: GlobalAccount;
   authority: PublicKey;
   marketAccount?: MarketAccount;
+};
+
+/**
+ * Build a termination instruction without executing it
+ * Used for batch transactions
+ */
+export const buildTerminationInstruction = async ({
+  program,
+  programId,
+  market,
+  globalPda,
+  globalAccount,
+  authority,
+  marketAccount,
+}: TerminateMarketArgs) => {
+  const { marketUsdcVault, platformTreasury, creatorTreasury } = deriveMarketPdas(
+    programId,
+    market
+  );
+
+  const usdcMint = globalAccount.usdcMint;
+  const creator = marketAccount
+    ? marketAccount.creator
+    : ((await program.account.market.fetch(market)) as unknown as MarketAccount).creator;
+
+  const { creatorUsdcAccount, adminUsdcAccount } = resolveUsdcAccounts({
+    usdcMint,
+    creator,
+    authority,
+    creatorOverride: process.env.CREATOR_USDC_ACCOUNT,
+    adminOverride: process.env.ADMIN_USDC_ACCOUNT,
+  });
+
+  const instruction = await program.methods
+    .terminateIfInactive()
+    .accounts({
+      global: globalPda,
+      authority,
+      market,
+      marketUsdcVault,
+      platformTreasury,
+      creatorTreasury,
+      creatorUsdcAccount,
+      callerUsdcAccount: adminUsdcAccount,
+      usdcMint,
+      tokenProgram: TOKEN_PROGRAM_ID,
+    })
+    .instruction();
+
+  return instruction;
 };
 
 export const executeTermination = async ({

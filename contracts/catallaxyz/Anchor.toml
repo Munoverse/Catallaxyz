@@ -6,13 +6,13 @@ resolution = true
 skip-lint = false
 
 [programs.devnet]
-catallaxyz = "FYs6iC1M84eiMZRe45uwmBt7PnZCMnG1XSjC1tgTy2kk"
+catallaxyz = "GEswHWjzyZz3XAD4fik2qMmSMwJykUEWJfVZL72QQ2yH"
 
 [programs.localnet]
-catallaxyz = "FYs6iC1M84eiMZRe45uwmBt7PnZCMnG1XSjC1tgTy2kk"
+catallaxyz = "GEswHWjzyZz3XAD4fik2qMmSMwJykUEWJfVZL72QQ2yH"
 
 [programs.mainnet]
-catallaxyz = "FYs6iC1M84eiMZRe45uwmBt7PnZCMnG1XSjC1tgTy2kk"
+catallaxyz = "GEswHWjzyZz3XAD4fik2qMmSMwJykUEWJfVZL72QQ2yH"
 
 [registry]
 url = "https://api.apr.dev"

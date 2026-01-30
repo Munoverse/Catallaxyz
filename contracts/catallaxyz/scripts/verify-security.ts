@@ -3,6 +3,7 @@ import { Program } from "@coral-xyz/anchor";
 import { Connection, PublicKey } from "@solana/web3.js";
 import * as fs from "fs";
 import type { Catallaxyz } from "../target/types/catallaxyz";
+import { setupProvider, getAnchorConfig, printConfig } from "./utils/anchor-config.js";
 
 /**
  * Security Verification Script
@@ -42,8 +43,10 @@ async function main() {
   
   const checks: SecurityCheck[] = [];
   
-  // 1. Check network configuration
-  const rpcUrl = process.env.ANCHOR_PROVIDER_URL || "https://api.devnet.solana.com";
+  // 1. Get configuration from Anchor.toml
+  printConfig();
+  const config = getAnchorConfig();
+  const rpcUrl = config.rpcUrl;
   const isMainnet = rpcUrl.includes("mainnet");
   const isDevnet = rpcUrl.includes("devnet");
   
@@ -52,9 +55,8 @@ async function main() {
   console.log("   Type:", isMainnet ? "Mainnet" : isDevnet ? "Devnet" : "Unknown");
   
   // 2. Load program
-  const connection = new Connection(rpcUrl, "confirmed");
-  const provider = anchor.AnchorProvider.env();
-  anchor.setProvider(provider);
+  const provider = setupProvider();
+  const connection = provider.connection;
   
   const idlPath = "./target/idl/catallaxyz.json";
   if (!fs.existsSync(idlPath)) {

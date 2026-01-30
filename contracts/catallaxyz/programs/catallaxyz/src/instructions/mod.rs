@@ -25,6 +25,7 @@ pub mod settle_with_randomness;
 
 // Admin instructions
 pub mod terminate_if_inactive;
+pub mod set_keeper;
 pub mod pause_market;
 pub mod resume_market;
 pub mod update_fee_rates;
@@ -74,6 +75,8 @@ pub use settle_with_randomness::*;
 // Admin instructions
 #[allow(ambiguous_glob_reexports)]
 pub use terminate_if_inactive::*;
+#[allow(ambiguous_glob_reexports)]
+pub use set_keeper::*;
 #[allow(ambiguous_glob_reexports)]
 pub use pause_market::*;
 #[allow(ambiguous_glob_reexports)]
