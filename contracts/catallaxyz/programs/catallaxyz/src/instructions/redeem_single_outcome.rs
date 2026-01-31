@@ -28,14 +28,14 @@ pub struct RedeemSingleOutcome<'info> {
         seeds = [GLOBAL_SEED.as_bytes()],
         bump = global.bump,
     )]
-    pub global: Account<'info, Global>,
+    pub global: Box<Account<'info, Global>>,
 
     #[account(
         mut,
         constraint = market.can_redeem @ TerminatorError::RedemptionNotAllowed,
         constraint = market.global == global.key() @ TerminatorError::InvalidGlobalAccount,
     )]
-    pub market: Account<'info, Market>,
+    pub market: Box<Account<'info, Market>>,
 
     /// User position account (PDA)
     #[account(

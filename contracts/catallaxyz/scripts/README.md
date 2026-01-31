@@ -20,8 +20,8 @@ wallet = "~/.config/solana/id.json"          # 钱包路径
 | 变量 | 用途 | 默认值 |
 |------|------|--------|
 | `TEST_USDC_MINT` | Devnet 测试 USDC Mint 地址 | 必需（devnet 初始化） |
-| `SETTLEMENT_SIGNER_PUBLIC_KEY` | 结算签名者公钥 | 使用钱包公钥 |
-| `KEEPER_PUBLIC_KEY` | Keeper 公钥（可选） | 无 |
+| `KEEPER_PUBLIC_KEY` | Keeper 公钥（可选） | 使用钱包公钥 |
+| `OPERATOR_PUBLIC_KEY` | Operator 公钥（可选） | 使用钱包公钥 |
 
 ---
 

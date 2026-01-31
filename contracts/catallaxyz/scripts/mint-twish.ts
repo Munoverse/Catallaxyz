@@ -4,7 +4,7 @@ import {
   mintTo,
 } from "@solana/spl-token";
 import * as fs from "fs";
-import { getConnection, loadWallet, getAnchorConfig, printConfig } from "./utils/anchor-config.js";
+import { getConnection, loadWallet, getAnchorConfig, printConfig } from "./utils/anchor-config.ts";
 
 /**
  * Mint Twish tokens to your wallet or specified address

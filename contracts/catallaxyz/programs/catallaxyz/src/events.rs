@@ -254,3 +254,135 @@ pub struct RewardFeesWithdrawn {
     /// Withdrawal timestamp
     pub withdrawn_at: i64,
 }
+
+// ============================================
+// Exchange (Polymarket-style) Events
+// ============================================
+
+/// Order filled event (single order fill)
+/// 
+/// Emitted when an order is partially or fully filled
+#[event]
+pub struct OrderFilled {
+    /// Order hash (32-byte keccak256)
+    pub order_hash: [u8; 32],
+    /// Maker address (order creator)
+    pub maker: Pubkey,
+    /// Taker address (order filler / operator)
+    pub taker: Pubkey,
+    /// Maker asset ID (token_id of asset maker provides)
+    pub maker_asset_id: u8,
+    /// Taker asset ID (token_id of asset taker provides)
+    pub taker_asset_id: u8,
+    /// Maker amount filled
+    pub maker_amount_filled: u64,
+    /// Taker amount filled
+    pub taker_amount_filled: u64,
+    /// Fee charged (in proceeds token)
+    pub fee: u64,
+    /// Market address
+    pub market: Pubkey,
+    /// Transaction slot
+    pub slot: u64,
+    /// Transaction timestamp
+    pub timestamp: i64,
+}
+
+/// Order cancelled event
+/// 
+/// Emitted when an order is cancelled by the maker
+#[event]
+pub struct OrderCancelled {
+    /// Order hash (32-byte keccak256)
+    pub order_hash: [u8; 32],
+    /// Maker address (order creator who cancelled)
+    pub maker: Pubkey,
+    /// Market address
+    pub market: Pubkey,
+    /// Transaction slot
+    pub slot: u64,
+    /// Transaction timestamp
+    pub timestamp: i64,
+}
+
+/// Orders matched event
+/// 
+/// Emitted when a taker order is matched against one or more maker orders
+#[event]
+pub struct OrdersMatched {
+    /// Taker order hash
+    pub taker_order_hash: [u8; 32],
+    /// Taker address (taker order maker)
+    pub taker_maker: Pubkey,
+    /// Maker asset ID
+    pub maker_asset_id: u8,
+    /// Taker asset ID
+    pub taker_asset_id: u8,
+    /// Total maker amount filled
+    pub maker_amount_filled: u64,
+    /// Total taker amount filled
+    pub taker_amount_filled: u64,
+    /// Number of maker orders matched
+    pub maker_orders_count: u8,
+    /// Market address
+    pub market: Pubkey,
+    /// Transaction slot
+    pub slot: u64,
+    /// Transaction timestamp
+    pub timestamp: i64,
+}
+
+/// User nonce incremented event
+/// 
+/// Emitted when a user increments their nonce to cancel all pending orders
+#[event]
+pub struct NonceIncremented {
+    /// User address
+    pub user: Pubkey,
+    /// New nonce value
+    pub new_nonce: u64,
+    /// Transaction slot
+    pub slot: u64,
+    /// Transaction timestamp
+    pub timestamp: i64,
+}
+
+/// Operator added event
+#[event]
+pub struct OperatorAdded {
+    /// New operator address
+    pub operator: Pubkey,
+    /// Added by admin
+    pub added_by: Pubkey,
+    /// Timestamp
+    pub timestamp: i64,
+}
+
+/// Operator removed event
+#[event]
+pub struct OperatorRemoved {
+    /// Removed operator address
+    pub operator: Pubkey,
+    /// Removed by admin
+    pub removed_by: Pubkey,
+    /// Timestamp
+    pub timestamp: i64,
+}
+
+/// Global trading paused event
+#[event]
+pub struct GlobalTradingPaused {
+    /// Admin who paused
+    pub paused_by: Pubkey,
+    /// Timestamp
+    pub timestamp: i64,
+}
+
+/// Global trading unpaused event
+#[event]
+pub struct GlobalTradingUnpaused {
+    /// Admin who unpaused
+    pub unpaused_by: Pubkey,
+    /// Timestamp
+    pub timestamp: i64,
+}

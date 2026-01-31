@@ -92,8 +92,6 @@ pub struct Market {
     /// Trade nonce - incremented on each trade that opts for VRF check
     /// Used to ensure unique randomness: hash(vrf_value, market, user, nonce, slot)
     pub trade_nonce: u64,
-    /// Settlement nonce - incremented on each settled trade to prevent replay
-    pub settle_trade_nonce: u64,
     
     // ============================================
     // Creator Incentive Tracking
@@ -151,7 +149,6 @@ impl Market {
         + 1 + 8 + 1 + 8 + 1 + 8
         + 1 + 4 + 1 + 1 + 8 + 1 + 8 + 1 + 1 + 8
         + 8  // trade_nonce
-        + 8  // settle_trade_nonce
         + 8  // creator_incentive_accrued (fee rates removed, read from Global)
         + 1 + 1 + 8
         + 1;
@@ -241,8 +238,6 @@ impl Market {
         self.outcome_token_mints[index] = mint;
         Ok(())
     }
-    
-    // NOTE: can_trade() is defined above at line 179, this duplicate removed in v1.2.4
     
     /// Pause market (admin only)
     pub fn pause(&mut self, now_ts: i64) {

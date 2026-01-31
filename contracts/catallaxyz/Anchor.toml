@@ -6,19 +6,21 @@ resolution = true
 skip-lint = false
 
 [programs.devnet]
-catallaxyz = "GEswHWjzyZz3XAD4fik2qMmSMwJykUEWJfVZL72QQ2yH"
+catallaxyz = "Ee5zAUK33g3AnAFEHLmcwQeqahar8EqmVjkovCaGtsNg"
 
 [programs.localnet]
-catallaxyz = "GEswHWjzyZz3XAD4fik2qMmSMwJykUEWJfVZL72QQ2yH"
+catallaxyz = "Ee5zAUK33g3AnAFEHLmcwQeqahar8EqmVjkovCaGtsNg"
 
 [programs.mainnet]
-catallaxyz = "GEswHWjzyZz3XAD4fik2qMmSMwJykUEWJfVZL72QQ2yH"
+catallaxyz = "Ee5zAUK33g3AnAFEHLmcwQeqahar8EqmVjkovCaGtsNg"
 
 [registry]
 url = "https://api.apr.dev"
 
 [provider]
-cluster = "devnet"
+# 官方 RPC（慢，常超时）: cluster = "devnet"
+# Helius RPC（快，稳定）: 替换 YOUR_HELIUS_API_KEY 为你的 API Key
+cluster = "https://devnet.helius-rpc.com/?api-key=e905218d-0b4d-4688-b054-f4c92d5f4aa1"
 wallet = "~/.config/solana/id.json"
 
 [scripts]

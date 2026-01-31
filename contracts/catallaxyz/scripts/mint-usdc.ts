@@ -22,7 +22,7 @@ import {
 } from "@solana/spl-token";
 import { PublicKey } from "@solana/web3.js";
 import * as fs from "fs";
-import { getConnection, loadWallet, getAnchorConfig, printConfig } from "./utils/anchor-config.js";
+import { getConnection, loadWallet, getAnchorConfig, printConfig } from "./utils/anchor-config.ts";
 
 // Parse command line arguments
 function parseArgs(): { amount: number; recipient?: string } {

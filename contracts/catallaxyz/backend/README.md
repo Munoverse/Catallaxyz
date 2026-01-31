@@ -1,15 +1,100 @@
-# Backend Admin Jobs (DEPRECATED)
+# Backend Sync & Admin Jobs
 
-> **⚠️ DEPRECATED**: This folder contains legacy admin scripts. 
-> The main backend at `/apps/backend/` now handles all these functions with better:
-> - Error handling
-> - Logging
-> - API integration
-> - Cron scheduling
->
-> **Recommended**: Use `apps/backend` instead of these scripts.
+This folder contains blockchain synchronization services and admin scripts.
 
-This folder contains legacy backend/ops scripts that must be run by the global authority wallet.
+## Sync Services
+
+These services sync on-chain state to the PostgreSQL database for the off-chain CLOB and UI.
+
+### Event Indexer (cron/sync-events.ts)
+
+Indexes all contract events to the database. This is the primary sync service.
+
+```bash
+export DATABASE_URL=postgresql://<user>:<password>@<host>:5432/<db>
+export ANCHOR_PROVIDER_URL=https://api.devnet.solana.com
+export NEXT_PUBLIC_PROGRAM_ID=<program_id>
+
+# Run once
+SYNC_ONCE=true yarn sync-events
+
+# Run continuously (default)
+yarn sync-events
+```
+
+Events indexed:
+- `MarketCreated`, `MarketSettled`, `MarketTerminated`, `MarketPaused`, `MarketResumed`
+- `OrderFilled`, `OrderCancelled`, `OrdersMatched`
+- `PositionSplit`, `PositionMerged`, `CtfTokensRedeemed`
+- `NonceIncremented`
+- `GlobalFeeRatesUpdated`, `GlobalTradingPaused`, `GlobalTradingUnpaused`
+
+### Trade Sync (cron/sync-trades.ts)
+
+Syncs `TradingFeeCollected` events for trade history.
+
+```bash
+yarn sync-trades
+```
+
+### Market Sync (sync-markets.ts)
+
+Syncs all Market accounts to the database.
+
+```bash
+yarn sync-markets
+```
+
+### Global State Sync (sync-global.ts)
+
+Syncs the Global account (fee rates, operators, trading status).
+
+```bash
+yarn sync-global
+```
+
+### User Nonce Sync (sync-user-nonces.ts)
+
+Syncs UserNonce PDAs for CLOB order validation.
+
+```bash
+yarn sync-user-nonces
+```
+
+## Environment Variables
+
+| Variable | Required | Description |
+|----------|----------|-------------|
+| `DATABASE_URL` | Yes | PostgreSQL connection string |
+| `ANCHOR_PROVIDER_URL` | Yes | Solana RPC URL |
+| `NEXT_PUBLIC_PROGRAM_ID` | Yes | Catallaxyz program ID |
+| `ANCHOR_WALLET` | Admin only | Admin wallet for termination scripts |
+| `SYNC_BATCH_SIZE` | No | Batch size for event fetching (default: 100) |
+| `SYNC_INTERVAL_MS` | No | Sync interval in ms (default: 10000) |
+| `DRY_RUN` | No | Skip database writes (default: false) |
+| `SYNC_ONCE` | No | Run once and exit (default: false) |
+
+## Recommended Cron Schedule
+
+```cron
+# Event indexer (every 10 seconds via pm2 or systemd)
+*/10 * * * * * cd /path/to/backend && yarn sync-events
+
+# Market sync (every 5 minutes)
+*/5 * * * * cd /path/to/backend && yarn sync-markets
+
+# Global state sync (every hour)
+0 * * * * cd /path/to/backend && yarn sync-global
+
+# Inactivity check (every 6 hours)
+0 */6 * * * cd /path/to/backend && yarn check-inactive
+```
+
+---
+
+## Admin Scripts (Require Authority Wallet)
+
+This folder also contains admin scripts that must be run by the global authority wallet.
 
 ## Inactivity Termination
 
@@ -88,21 +173,6 @@ Returns:
   "nextCursor": "<token or null>"
 }
 ```
-
-## Trade Settlement Signer (API)
-
-The frontend can request settlement signatures from the Next.js API route:
-
-`POST /api/settle-trade`
-
-Required env var (server-side only):
-
-```
-SETTLEMENT_SIGNER_SECRET_KEY='[1,2,3,...]'
-```
-
-This must be a JSON array matching a Solana keypair secret key.
-The API returns a 64-byte signature array and the signer public key.
 
 ## CLOB Orderbook (API)
 

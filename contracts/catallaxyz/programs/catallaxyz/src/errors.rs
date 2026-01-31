@@ -162,4 +162,65 @@ pub enum TerminatorError {
     
     #[msg("Invalid global account")]
     InvalidGlobalAccount,
+    
+    // ============================================
+    // Exchange (Polymarket-style) Errors
+    // ============================================
+    
+    #[msg("Trading is paused")]
+    TradingPaused,
+    
+    #[msg("Not an operator")]
+    NotOperator,
+    
+    #[msg("Not an admin")]
+    NotAdmin,
+    
+    #[msg("Maximum operators reached")]
+    MaxOperatorsReached,
+    
+    #[msg("Already an operator")]
+    AlreadyOperator,
+    
+    #[msg("Operator not found")]
+    OperatorNotFound,
+    
+    #[msg("Order expired")]
+    OrderExpired,
+    
+    #[msg("Order not fillable (already filled or cancelled)")]
+    OrderNotFillable,
+    
+    #[msg("Invalid nonce")]
+    InvalidNonce,
+    
+    #[msg("Fee rate too high")]
+    FeeTooHigh,
+    
+    #[msg("Orders not crossing (prices don't match)")]
+    NotCrossing,
+    
+    #[msg("Invalid taker (order restricted to specific taker)")]
+    InvalidTaker,
+    
+    #[msg("Invalid order signer")]
+    InvalidOrderSigner,
+    
+    #[msg("Token ID mismatch")]
+    MismatchedTokenIds,
+    
+    #[msg("Invalid complement tokens")]
+    InvalidComplement,
+    
+    #[msg("Order hash mismatch")]
+    OrderHashMismatch,
+    
+    #[msg("Fill amount exceeds remaining")]
+    FillAmountExceedsRemaining,
+    
+    #[msg("Cannot cancel: not order maker")]
+    NotOrderMaker,
+    
+    #[msg("Order already cancelled or filled")]
+    OrderAlreadyCancelledOrFilled,
 }

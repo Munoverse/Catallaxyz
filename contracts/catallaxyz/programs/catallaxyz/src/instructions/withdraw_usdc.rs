@@ -18,7 +18,7 @@ pub struct WithdrawUsdc<'info> {
         seeds = [GLOBAL_SEED.as_bytes()],
         bump = global.bump
     )]
-    pub global: Account<'info, Global>,
+    pub global: Box<Account<'info, Global>>,
 
     #[account(
         seeds = [
@@ -29,7 +29,7 @@ pub struct WithdrawUsdc<'info> {
         bump = market.bump,
         constraint = market.global == global.key() @ TerminatorError::InvalidAccountInput,
     )]
-    pub market: Account<'info, Market>,
+    pub market: Box<Account<'info, Market>>,
 
     #[account(
         mut,
@@ -46,7 +46,7 @@ pub struct WithdrawUsdc<'info> {
         constraint = market_usdc_vault.mint == global.usdc_mint @ TerminatorError::InvalidTokenMint,
         constraint = market_usdc_vault.owner == market.key() @ TerminatorError::Unauthorized
     )]
-    pub market_usdc_vault: InterfaceAccount<'info, TokenAccount>,
+    pub market_usdc_vault: Box<InterfaceAccount<'info, TokenAccount>>,
 
     #[account(
         mut,

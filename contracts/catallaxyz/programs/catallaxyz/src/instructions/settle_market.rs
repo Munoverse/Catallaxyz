@@ -20,7 +20,7 @@ pub struct SettleMarket<'info> {
         seeds = [GLOBAL_SEED.as_bytes()],
         bump = global.bump
     )]
-    pub global: Account<'info, Global>,
+    pub global: Box<Account<'info, Global>>,
 
     #[account(
         mut,
@@ -29,7 +29,7 @@ pub struct SettleMarket<'info> {
         constraint = market.reference_agent.is_some() @ TerminatorError::MissingReferenceAgent,
         constraint = market.last_trade_outcome.is_some() @ TerminatorError::MissingLastTradeOutcome
     )]
-    pub market: Account<'info, Market>,
+    pub market: Box<Account<'info, Market>>,
 
     #[account(
         mut,
@@ -37,7 +37,7 @@ pub struct SettleMarket<'info> {
         constraint = market_usdc_vault.mint == global.usdc_mint @ TerminatorError::InvalidUsdcMint,
         constraint = market_usdc_vault.owner == market.key() @ TerminatorError::Unauthorized
     )]
-    pub market_usdc_vault: InterfaceAccount<'info, TokenAccount>,
+    pub market_usdc_vault: Box<InterfaceAccount<'info, TokenAccount>>,
 
     /// Creator treasury (holds creator incentives)
     #[account(
@@ -46,7 +46,7 @@ pub struct SettleMarket<'info> {
         bump,
         constraint = creator_treasury.owner == global.key() @ TerminatorError::InvalidTokenAccountOwner
     )]
-    pub creator_treasury: InterfaceAccount<'info, TokenAccount>,
+    pub creator_treasury: Box<InterfaceAccount<'info, TokenAccount>>,
 
     /// Creator USDC account (receives incentive payout)
     #[account(
@@ -54,7 +54,7 @@ pub struct SettleMarket<'info> {
         constraint = creator_usdc_account.owner == market.creator @ TerminatorError::InvalidTokenAccountOwner,
         constraint = creator_usdc_account.mint == global.usdc_mint @ TerminatorError::InvalidMint
     )]
-    pub creator_usdc_account: InterfaceAccount<'info, TokenAccount>,
+    pub creator_usdc_account: Box<InterfaceAccount<'info, TokenAccount>>,
 
     /// USDC mint account
     pub usdc_mint: InterfaceAccount<'info, token_interface::Mint>,

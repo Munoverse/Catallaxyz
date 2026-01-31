@@ -97,7 +97,7 @@ export interface UserBalance {
 export interface GlobalState {
   authority: string;
   usdcMint: string;
-  settlementSigner: string;
+  keeper: string;
   
   // Fee rates (in basis points, 1e6 scale)
   centerTakerFeeRate: number;
@@ -105,6 +105,11 @@ export interface GlobalState {
   platformFeeRate: number;
   makerRebateRate: number;
   creatorIncentiveRate: number;
+  
+  // Exchange (Polymarket-style) configuration
+  tradingPaused: boolean;
+  operatorCount: number;
+  operators: string[];
   
   bump: number;
 }

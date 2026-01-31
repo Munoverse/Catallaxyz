@@ -4,7 +4,7 @@ import { PublicKey, SystemProgram } from "@solana/web3.js";
 import { TOKEN_PROGRAM_ID } from "@solana/spl-token";
 import * as fs from "fs";
 import type { Catallaxyz } from "../target/types/catallaxyz";
-import { setupProvider, printConfig } from "./utils/anchor-config.js";
+import { setupProvider, printConfig } from "./utils/anchor-config.ts";
 
 /**
  * Devnet Initialization Script
@@ -14,8 +14,7 @@ import { setupProvider, printConfig } from "./utils/anchor-config.js";
  * 2. Initialize Platform Treasury
  * 3. Initialize Reward Treasury
  * 4. Initialize Creator Treasury
- * 5. Initialize VRF Treasury
- * 6. Verify all configurations
+ * 5. Verify all configurations
  * 
  * Prerequisites:
  * - Program deployed to Devnet
@@ -25,8 +24,7 @@ import { setupProvider, printConfig } from "./utils/anchor-config.js";
  * 
  * Environment variables:
  * - TEST_USDC_MINT: Address of the test USDC mint (required)
- * - SETTLEMENT_SIGNER_PUBLIC_KEY: Override the settlement signer (optional)
- * - KEEPER_PUBLIC_KEY: Set the keeper address (optional)
+ * - KEEPER_PUBLIC_KEY: Set the keeper address (optional, defaults to authority)
  * 
  * Usage:
  *   TEST_USDC_MINT=<mint_address> yarn ts-node scripts/initialize-devnet.ts
@@ -144,29 +142,19 @@ async function main() {
     programId
   );
 
-  const [treasuryPda] = PublicKey.findProgramAddressSync(
-    [Buffer.from("treasury")],
-    programId
-  );
-
   console.log("📍 Program Derived Addresses:");
   console.log("   Global PDA:", globalPda.toString());
   console.log("   Platform Treasury:", platformTreasuryPda.toString());
   console.log("   Reward Treasury:", rewardTreasuryPda.toString());
   console.log("   Creator Treasury:", creatorTreasuryPda.toString());
-  console.log("   VRF Treasury:", treasuryPda.toString());
   console.log("");
 
   console.log("✅ Starting initialization...");
   console.log("");
 
-  const settlementSigner = new PublicKey(
-    process.env.SETTLEMENT_SIGNER_PUBLIC_KEY || provider.wallet.publicKey.toString()
-  );
-
   // Step 1: Initialize Global
   console.log("─".repeat(70));
-  console.log("Step 1/5: Initialize Global Account");
+  console.log("Step 1/4: Initialize Global Account");
   console.log("─".repeat(70));
   console.log("");
 
@@ -183,7 +171,6 @@ async function main() {
     }
     
     console.log("📝 Initializing Global account...");
-    console.log("   Settlement Signer:", settlementSigner.toString());
     
     const keeperEnv = process.env.KEEPER_PUBLIC_KEY;
     const keeper = keeperEnv ? new PublicKey(keeperEnv) : null;
@@ -195,7 +182,6 @@ async function main() {
       const tx = await program.methods
         .initialize({
           usdcMint: TEST_USDC_MINT,
-          settlementSigner,
           keeper,
         })
         .accountsStrict({
@@ -222,7 +208,7 @@ async function main() {
 
   // Step 2: Initialize Platform Treasury
   console.log("─".repeat(70));
-  console.log("Step 2/5: Initialize Platform Treasury");
+  console.log("Step 2/4: Initialize Platform Treasury");
   console.log("─".repeat(70));
   console.log("");
 
@@ -262,7 +248,7 @@ async function main() {
 
   // Step 3: Initialize Reward Treasury
   console.log("─".repeat(70));
-  console.log("Step 3/5: Initialize Reward Treasury");
+  console.log("Step 3/4: Initialize Reward Treasury");
   console.log("─".repeat(70));
   console.log("");
 
@@ -302,7 +288,7 @@ async function main() {
 
   // Step 4: Initialize Creator Treasury
   console.log("─".repeat(70));
-  console.log("Step 4/5: Initialize Creator Treasury");
+  console.log("Step 4/4: Initialize Creator Treasury");
   console.log("─".repeat(70));
   console.log("");
 
@@ -330,46 +316,6 @@ async function main() {
         .rpc();
 
       console.log("✅ Creator Treasury initialized!");
-      console.log("📝 Transaction:", tx);
-      await connection.confirmTransaction(tx, "confirmed");
-    } catch (error: any) {
-      console.error("❌ Failed:", error.message);
-      process.exit(1);
-    }
-  }
-
-  console.log("");
-
-  // Step 5: Initialize VRF Treasury
-  console.log("─".repeat(70));
-  console.log("Step 5/5: Initialize VRF Treasury");
-  console.log("─".repeat(70));
-  console.log("");
-
-  try {
-    const info = await connection.getAccountInfo(treasuryPda);
-    if (info && info.data.length > 0) {
-      console.log("✅ VRF Treasury already initialized");
-    } else {
-      throw new Error("Not initialized");
-    }
-  } catch (error) {
-    console.log("📝 Initializing VRF Treasury...");
-    try {
-      const globalAccount = await program.account.global.fetch(globalPda);
-      const tx = await program.methods
-        .initTreasury()
-        .accountsStrict({
-          authority: provider.wallet.publicKey,
-          global: globalPda,
-          treasury: treasuryPda,
-          usdcMint: globalAccount.usdcMint,
-          tokenProgram: TOKEN_PROGRAM_ID,
-          systemProgram: SystemProgram.programId,
-        })
-        .rpc();
-
-      console.log("✅ VRF Treasury initialized!");
       console.log("📝 Transaction:", tx);
       await connection.confirmTransaction(tx, "confirmed");
     } catch (error: any) {
@@ -408,7 +354,6 @@ async function main() {
   await checkBalance("Platform Treasury", platformTreasuryPda);
   await checkBalance("Reward Treasury", rewardTreasuryPda);
   await checkBalance("Creator Treasury", creatorTreasuryPda);
-  await checkBalance("VRF Treasury", treasuryPda);
 
   // Check final SOL balance
   const finalBalance = await connection.getBalance(provider.wallet.publicKey);

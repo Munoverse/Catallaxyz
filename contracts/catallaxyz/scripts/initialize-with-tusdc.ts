@@ -3,7 +3,7 @@ import { Program } from "@coral-xyz/anchor";
 import { PublicKey, SystemProgram } from "@solana/web3.js";
 import * as fs from "fs";
 import type { Catallaxyz } from "../target/types/catallaxyz";
-import { setupProvider, printConfig } from "./utils/anchor-config.js";
+import { setupProvider, printConfig } from "./utils/anchor-config.ts";
 
 /**
  * Initialize Catallaxyz program with tUSDC
@@ -14,7 +14,7 @@ import { setupProvider, printConfig } from "./utils/anchor-config.js";
  * 3. Verify initialization results
  * 
  * Optional environment variables:
- * - SETTLEMENT_SIGNER_PUBLIC_KEY: Override the settlement signer (defaults to wallet)
+ * - KEEPER_PUBLIC_KEY: Set the keeper address (defaults to authority)
  * 
  * Usage:
  *   yarn ts-node scripts/initialize-with-tusdc.ts
@@ -39,11 +39,6 @@ async function main() {
   // Read tUSDC config
   const config = JSON.parse(fs.readFileSync(configPath, "utf8"));
   const tUsdcMint = new PublicKey(config.testUsdcMint);
-  
-  // Settlement signer (optional env override)
-  const settlementSigner = new PublicKey(
-    process.env.SETTLEMENT_SIGNER_PUBLIC_KEY || provider.wallet.publicKey.toString()
-  );
 
   console.log("📋 Configuration Info:");
   console.log("   Network:", config.network);
@@ -137,7 +132,6 @@ async function main() {
     const tx = await program.methods
         .initialize({
           usdcMint: tUsdcMint,
-          settlementSigner,
           keeper,
         })
       .accountsStrict({

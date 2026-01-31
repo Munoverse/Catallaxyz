@@ -3,7 +3,7 @@ import { Program } from "@coral-xyz/anchor";
 import { Connection, PublicKey } from "@solana/web3.js";
 import * as fs from "fs";
 import type { Catallaxyz } from "../target/types/catallaxyz";
-import { setupProvider, getAnchorConfig, printConfig } from "./utils/anchor-config.js";
+import { setupProvider, getAnchorConfig, printConfig } from "./utils/anchor-config.ts";
 
 /**
  * Security Verification Script

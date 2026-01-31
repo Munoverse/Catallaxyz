@@ -10,25 +10,3 @@ export const INACTIVITY_TIMEOUT_SECONDS = 7 * 24 * 60 * 60;
 export const VRF_FEE_LAMPORTS = 5_000_000;
 export const MARKET_CREATION_FEE = 10_000_000;
 export const TERMINATION_EXECUTION_REWARD_USDC = 100_000;
-
-// AUDIT FIX T-16: Add termination probability constant (synced from constants.rs)
-// DEFAULT_TERMINATION_PROBABILITY = 1_000 means 0.1% (1000 / 1_000_000)
-export const DEFAULT_TERMINATION_PROBABILITY = 1_000;
-export const TERMINATION_PROBABILITY = 0.001; // 0.1% as decimal
-export const MAX_OUTCOME_TOKENS = 2;
-
-// ============================================
-// AUDIT FIX MED-4: Add missing constants from contract
-// ============================================
-
-/** Price tolerance for validation (0.01% at 10^6 scale) */
-export const PRICE_TOLERANCE = 100;
-
-/** Maximum question length in bytes (UTF-8) */
-export const MAX_QUESTION_LEN = 200;
-
-/** Maximum description length in bytes (UTF-8) */
-export const MAX_DESCRIPTION_LEN = 500;
-
-/** Maximum outcome description length in bytes (UTF-8) */
-export const MAX_OUTCOME_DESCRIPTION_LEN = 200;

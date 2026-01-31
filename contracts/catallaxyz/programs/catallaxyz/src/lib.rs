@@ -14,7 +14,7 @@ pub mod utils;
 #[allow(ambiguous_glob_reexports)]
 use instructions::*;
 
-declare_id!("GEswHWjzyZz3XAD4fik2qMmSMwJykUEWJfVZL72QQ2yH");
+declare_id!("Ee5zAUK33g3AnAFEHLmcwQeqahar8EqmVjkovCaGtsNg");
 
 #[program]
 pub mod catallaxyz {
@@ -23,11 +23,6 @@ pub mod catallaxyz {
     /// Initialize the global program state
     pub fn initialize(ctx: Context<Initialize>, params: InitializeParams) -> Result<()> {
         instructions::initialize::handler(ctx, params)
-    }
-
-    /// Initialize the legacy VRF treasury (Switchboard fees only)
-    pub fn init_treasury(ctx: Context<InitTreasury>) -> Result<()> {
-        instructions::init_treasury::handler(ctx)
     }
 
     /// Initialize the platform treasury for collecting trading and creation fees
@@ -107,12 +102,6 @@ pub mod catallaxyz {
         params: MergePositionSingleParams,
     ) -> Result<()> {
         instructions::merge_position_single::handler(ctx, params)
-    }
-
-
-    /// Settle a single trade from the off-chain matching engine
-    pub fn settle_trade(ctx: Context<SettleTrade>, params: SettleTradeParams) -> Result<()> {
-        instructions::settle_trade::handler(ctx, params)
     }
 
     // ============================================
@@ -197,6 +186,67 @@ pub mod catallaxyz {
         params: WithdrawRewardFeesParams,
     ) -> Result<()> {
         instructions::withdraw_reward_fees::handler(ctx, params)
+    }
+
+    // ============================================
+    // Exchange (Polymarket-style) Instructions
+    // ============================================
+
+    /// Fill a single signed order
+    /// Operator acts as counterparty
+    pub fn fill_order(
+        ctx: Context<FillOrder>,
+        params: FillOrderParams,
+    ) -> Result<()> {
+        instructions::fill_order::handler(ctx, params)
+    }
+
+    /// Match taker order against multiple maker orders atomically
+    /// Supports COMPLEMENTARY, MINT, and MERGE match types
+    pub fn match_orders<'info>(
+        ctx: Context<'_, '_, 'info, 'info, MatchOrders<'info>>,
+        params: MatchOrdersParams,
+    ) -> Result<()> {
+        instructions::match_orders::handler(ctx, params)
+    }
+
+    /// Cancel an order on-chain (maker only)
+    pub fn cancel_order(
+        ctx: Context<CancelOrder>,
+        params: CancelOrderParams,
+    ) -> Result<()> {
+        instructions::cancel_order::handler(ctx, params)
+    }
+
+    /// Increment user nonce to batch-cancel all orders with lower nonce
+    pub fn increment_nonce(ctx: Context<IncrementNonce>) -> Result<()> {
+        instructions::increment_nonce::handler(ctx)
+    }
+
+    /// Add an operator (admin only)
+    pub fn add_operator(
+        ctx: Context<AddOperator>,
+        params: AddOperatorParams,
+    ) -> Result<()> {
+        instructions::operator_management::handler_add_operator(ctx, params)
+    }
+
+    /// Remove an operator (admin only)
+    pub fn remove_operator(
+        ctx: Context<RemoveOperator>,
+        params: RemoveOperatorParams,
+    ) -> Result<()> {
+        instructions::operator_management::handler_remove_operator(ctx, params)
+    }
+
+    /// Pause global trading (admin only)
+    pub fn pause_trading(ctx: Context<PauseTrading>) -> Result<()> {
+        instructions::global_pause::handler_pause_trading(ctx)
+    }
+
+    /// Unpause global trading (admin only)
+    pub fn unpause_trading(ctx: Context<UnpauseTrading>) -> Result<()> {
+        instructions::global_pause::handler_unpause_trading(ctx)
     }
 
 }

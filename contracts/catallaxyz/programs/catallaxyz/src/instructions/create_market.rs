@@ -164,7 +164,6 @@ pub fn handler(ctx: Context<CreateMarket>, params: CreateMarketParams) -> Result
     market.can_redeem = false;
     market.termination_trade_slot = None;
     market.trade_nonce = 0;
-    market.settle_trade_nonce = 0;
     
     // Creator incentive tracking
     // Fee rates are read from Global account (see Global.calculate_taker_fee_rate())

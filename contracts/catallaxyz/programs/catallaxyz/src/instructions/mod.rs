@@ -1,5 +1,4 @@
 pub mod initialize;
-pub mod init_treasury;
 pub mod init_platform_treasury;
 pub mod init_reward_treasury;
 pub mod init_creator_treasury;
@@ -11,7 +10,6 @@ pub mod create_market;
 pub mod init_market_vault;
 pub mod settle_market;
 pub mod redeem_single_outcome;
-pub mod settle_trade;
 
 pub mod split_position_single; // Split USDC into YES+NO for single question
 pub mod merge_position_single; // Merge YES+NO back to USDC for single question
@@ -33,12 +31,22 @@ pub mod update_market_params;
 pub mod withdraw_platform_fees;
 pub mod withdraw_reward_fees;
 
+// ============================================
+// Exchange (Polymarket-style) Instructions
+// ============================================
+
+pub mod calculator;        // Fee and price calculation utilities
+pub mod fill_order;        // Fill single order
+pub mod match_orders;      // Match taker against makers atomically
+pub mod cancel_order;      // Cancel order on-chain
+pub mod increment_nonce;   // Batch cancel via nonce increment
+pub mod operator_management; // Add/remove operators
+pub mod global_pause;      // Pause/unpause global trading
+
 // Allow ambiguous glob re-exports since each handler is namespaced by its module
 // and we call them explicitly in lib.rs (e.g., instructions::initialize::handler)
 #[allow(ambiguous_glob_reexports)]
 pub use initialize::*;
-#[allow(ambiguous_glob_reexports)]
-pub use init_treasury::*;
 #[allow(ambiguous_glob_reexports)]
 pub use init_platform_treasury::*;
 #[allow(ambiguous_glob_reexports)]
@@ -54,7 +62,6 @@ pub use init_market_vault::*;
 pub use settle_market::*;
 #[allow(ambiguous_glob_reexports)]
 pub use redeem_single_outcome::*;
-pub use settle_trade::*;
 
 #[allow(ambiguous_glob_reexports)]
 pub use split_position_single::*;
@@ -89,3 +96,17 @@ pub use update_market_params::*;
 pub use withdraw_platform_fees::*;
 #[allow(ambiguous_glob_reexports)]
 pub use withdraw_reward_fees::*;
+
+// Exchange (Polymarket-style) instructions
+#[allow(ambiguous_glob_reexports)]
+pub use fill_order::*;
+#[allow(ambiguous_glob_reexports)]
+pub use match_orders::*;
+#[allow(ambiguous_glob_reexports)]
+pub use cancel_order::*;
+#[allow(ambiguous_glob_reexports)]
+pub use increment_nonce::*;
+#[allow(ambiguous_glob_reexports)]
+pub use operator_management::*;
+#[allow(ambiguous_glob_reexports)]
+pub use global_pause::*;

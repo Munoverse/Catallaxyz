@@ -98,7 +98,7 @@ Catallaxyz的CLOB也是基于链下撮合，链上验证，用户交易无需gas
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
 │              Off-chain Matching Engine (CLOB)               │
-│         Signs fills with settlement_signer key              │
+│      User signs orders, Operator submits matches            │
 └─────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -127,7 +127,7 @@ Catallaxyz的CLOB也是基于链下撮合，链上验证，用户交易无需gas
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
 │               链下撮合引擎 (中央限价订单簿)                    │
-│           使用 settlement_signer 密钥签名成交                 │
+│         用户签名订单，Operator 提交撮合交易                   │
 └─────────────────────────────────────────────────────────────┘
                               │
                               ▼
@@ -156,7 +156,8 @@ Catallaxyz的CLOB也是基于链下撮合，链上验证，用户交易无需gas
 |-------|------------------|-------------|
 | `authority` | Admin wallet that can update settings | 可更新设置的管理员钱包 |
 | `usdc_mint` | USDC token mint address | USDC 代币铸造地址 |
-| `settlement_signer` | Public key for verifying trade signatures | 用于验证交易签名的公钥 |
+| `keeper` | Wallet for automated tasks (termination) | 用于自动任务的钱包（终止市场） |
+| `operators` | Authorized wallets for trade execution | 授权执行交易的钱包列表 |
 | `center_taker_fee_rate` | Fee rate at 50% price (3.2%) | 50% 价格时的费率 (3.2%) |
 | `extreme_taker_fee_rate` | Fee rate at 0%/100% price (0.2%) | 0%/100% 价格时的费率 (0.2%) |
 
@@ -369,7 +370,8 @@ npx ts-node scripts/initialize-mainnet.ts
 
 ### English
 
-- **Signature Verification**: All trades are verified using Ed25519 signatures from the settlement signer
+- **Signature Verification**: All orders are verified using Ed25519 signatures from users
+- **Operator Authorization**: Only authorized operators can execute trades
 - **Overflow Protection**: All arithmetic operations use checked math
 - **Access Control**: Admin functions restricted to authority wallet
 - **Pause Mechanism**: Emergency pause capability for market protection
@@ -377,7 +379,8 @@ npx ts-node scripts/initialize-mainnet.ts
 
 ### 中文
 
-- **签名验证**: 所有交易都使用结算签名者的 Ed25519 签名进行验证
+- **签名验证**: 所有订单都使用用户的 Ed25519 签名进行验证
+- **Operator 授权**: 只有授权的 operator 才能执行交易
 - **溢出保护**: 所有算术运算使用检查数学
 - **访问控制**: 管理功能限制为授权钱包
 - **暂停机制**: 具有紧急暂停能力以保护市场

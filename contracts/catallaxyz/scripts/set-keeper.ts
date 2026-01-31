@@ -1,8 +1,9 @@
 import * as anchor from "@coral-xyz/anchor";
 import { Program } from "@coral-xyz/anchor";
 import { PublicKey } from "@solana/web3.js";
+import * as fs from "fs";
 import type { Catallaxyz } from "../target/types/catallaxyz";
-import { setupProvider, printConfig, getAnchorConfig } from "./utils/anchor-config.js";
+import { setupProvider, printConfig } from "./utils/anchor-config";
 
 /**
  * Set or Update Keeper Script
@@ -56,10 +57,16 @@ async function main() {
   console.log("🤖 New Keeper:", newKeeper.toString());
   console.log("");
 
-  // Load program
-  const config = getAnchorConfig();
-  const programId = new PublicKey(config.programs.localnet.catallaxyz || config.programs.devnet?.catallaxyz);
-  const program = anchor.workspace.Catallaxyz as Program<Catallaxyz>;
+  // Load program from IDL
+  const idlPath = "./target/idl/catallaxyz.json";
+  if (!fs.existsSync(idlPath)) {
+    console.log("❌ IDL file not found!");
+    console.log("   Please run: anchor build");
+    process.exit(1);
+  }
+  const idl = JSON.parse(fs.readFileSync(idlPath, "utf8"));
+  const programId = new PublicKey(idl.address);
+  const program = new Program(idl, provider) as Program<Catallaxyz>;
 
   console.log("📋 Program ID:", program.programId.toString());
   console.log("");
@@ -103,7 +110,7 @@ async function main() {
   try {
     const tx = await program.methods
       .setKeeper({ newKeeper })
-      .accounts({
+      .accountsStrict({
         authority: provider.wallet.publicKey,
         global: globalPda,
       })

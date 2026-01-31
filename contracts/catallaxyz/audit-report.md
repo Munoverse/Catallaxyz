@@ -38,9 +38,10 @@
 - 现状：状态/费用等常量在 Rust 与 TS 中重复维护。
 - 影响：存在漂移风险。
 
-7) **历史指令疑似遗留**
-- 现状：`init_treasury` 仍暴露，但平台已拆分 platform/reward/creator treasury。
-- 影响：语义混乱与维护成本增加。
+7) ~~**历史指令疑似遗留**~~
+- ✅ **已修复 (2026-01-31)**：移除了废弃的 `init_treasury` 指令和相关的 VRF treasury 代码
+- 移除内容：`init_treasury.rs`、`TREASURY_SEED`、`treasury_bump`、`total_fees_collected`、`settle_trade_nonce`
+- 原因：Switchboard On-Demand 模式不需要预付 VRF 费用，VRF treasury 已无用
 
 8) **健壮性问题**
 - 现状：`switchboard_lite` 中存在 `expect`。

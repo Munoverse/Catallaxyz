@@ -20,7 +20,6 @@ export interface EnvConfig {
   ANCHOR_WALLET?: string;
   NEXT_PUBLIC_PROGRAM_ID?: string;
   NEXT_PUBLIC_SOLANA_RPC_URL?: string;
-  NEXT_PUBLIC_MAGIC_API_KEY?: string;
   CRON_SECRET?: string;
   ENABLE_INACTIVITY_TERMINATION?: boolean;
   INACTIVITY_TIMEOUT_SECONDS?: number;

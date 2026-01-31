@@ -1,6 +1,5 @@
 pub const GLOBAL_SEED: &str = "global";
 pub const MARKET_SEED: &str = "market";
-pub const TREASURY_SEED: &str = "treasury"; // VRF treasury (for Switchboard VRF fees)
 pub const PLATFORM_TREASURY_SEED: &str = "platform_treasury"; // Platform treasury (for trading fees & market creation fees)
 pub const REWARD_TREASURY_SEED: &str = "reward_treasury"; // Rewards treasury (for liquidity rewards)
 pub const CREATOR_TREASURY_SEED: &str = "creator_treasury"; // Creator treasury (for creator incentives)

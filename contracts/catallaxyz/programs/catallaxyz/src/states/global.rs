@@ -1,18 +1,21 @@
 use anchor_lang::prelude::*;
 
+/// Maximum number of operators allowed
+pub const MAX_OPERATORS: usize = 10;
+
+/// Maximum fee rate in basis points (10% = 1000 bps)
+pub const MAX_FEE_RATE_BPS: u16 = 1000;
+
 #[account]
 pub struct Global {
     pub authority: Pubkey,
     pub usdc_mint: Pubkey,
-    pub settlement_signer: Pubkey,
     /// Keeper wallet for automated tasks (terminating inactive markets)
     /// Can be set to a different wallet than authority for separation of concerns
     /// If set to Pubkey::default(), only authority can perform keeper tasks
     pub keeper: Pubkey,
     pub bump: u8,
-    pub treasury_bump: u8, // VRF treasury bump (for Switchboard fees)
     pub platform_treasury_bump: u8, // Platform treasury bump (for trading & creation fees)
-    pub total_fees_collected: u64, // Total fees collected in lamports (legacy, for VRF)
     pub total_trading_fees_collected: u64, // Total trading fees collected in USDC
     pub total_creation_fees_collected: u64, // Total market creation fees in USDC
 
@@ -42,20 +45,116 @@ pub struct Global {
     /// Creator incentive rate (scaled by 10^6, e.g., 50000 = 5%)
     /// Portion of taker fees sent to market creator
     pub creator_incentive_rate: u32,
+    
+    // ============================================
+    // Exchange (Polymarket-style) Configuration
+    // ============================================
+    
+    /// Global trading pause flag
+    /// When true, no trading operations (fill_order, match_orders) are allowed
+    pub trading_paused: bool,
+    
+    /// Number of active operators
+    pub operator_count: u8,
+    
+    /// List of operator addresses (authorized to execute trades)
+    /// Operators can call fill_order and match_orders
+    /// Max 10 operators
+    pub operators: [Pubkey; 10],
 }
 
 impl Global {
     // Space calculation:
-    // discriminator(8) + authority(32) + usdc_mint(32) + settlement_signer(32) + keeper(32)
-    // + bump(1) + treasury_bump(1) + platform_treasury_bump(1)
-    // + total_fees_collected(8) + total_trading_fees_collected(8) + total_creation_fees_collected(8)
+    // discriminator(8) + authority(32) + usdc_mint(32) + keeper(32)
+    // + bump(1) + platform_treasury_bump(1)
+    // + total_trading_fees_collected(8) + total_creation_fees_collected(8)
     // + center_taker_fee_rate(4) + extreme_taker_fee_rate(4)
     // + platform_fee_rate(4) + maker_rebate_rate(4) + creator_incentive_rate(4)
-    pub const INIT_SPACE: usize = 8 + 32 + 32 + 32 + 32 + 1 + 1 + 1 + 8 + 8 + 8 + 4 + 4 + 4 + 4 + 4;
+    // + trading_paused(1) + operator_count(1) + operators(32 * 10)
+    pub const INIT_SPACE: usize = 8 + 32 + 32 + 32 + 1 + 1 + 8 + 8 + 4 + 4 + 4 + 4 + 4 + 1 + 1 + 32 * MAX_OPERATORS;
 
     /// Check if the given pubkey is authorized as keeper (authority or designated keeper)
     pub fn is_keeper(&self, pubkey: &Pubkey) -> bool {
         *pubkey == self.authority || (*pubkey == self.keeper && self.keeper != Pubkey::default())
+    }
+    
+    /// Check if the given pubkey is an admin (authority)
+    pub fn is_admin(&self, pubkey: &Pubkey) -> bool {
+        *pubkey == self.authority
+    }
+    
+    /// Check if the given pubkey is an operator
+    pub fn is_operator(&self, pubkey: &Pubkey) -> bool {
+        // Authority is always an operator
+        if *pubkey == self.authority {
+            return true;
+        }
+        
+        // Check operator list
+        for i in 0..self.operator_count as usize {
+            if self.operators[i] == *pubkey {
+                return true;
+            }
+        }
+        false
+    }
+    
+    /// Add an operator
+    pub fn add_operator(&mut self, operator: Pubkey) -> Result<()> {
+        require!(
+            (self.operator_count as usize) < MAX_OPERATORS,
+            crate::errors::TerminatorError::MaxOperatorsReached
+        );
+        
+        // Check if already an operator
+        require!(
+            !self.is_operator(&operator),
+            crate::errors::TerminatorError::AlreadyOperator
+        );
+        
+        self.operators[self.operator_count as usize] = operator;
+        self.operator_count += 1;
+        Ok(())
+    }
+    
+    /// Remove an operator
+    pub fn remove_operator(&mut self, operator: Pubkey) -> Result<()> {
+        // Find the operator
+        let mut found_idx: Option<usize> = None;
+        for i in 0..self.operator_count as usize {
+            if self.operators[i] == operator {
+                found_idx = Some(i);
+                break;
+            }
+        }
+        
+        let idx = found_idx.ok_or(crate::errors::TerminatorError::OperatorNotFound)?;
+        
+        // Shift remaining operators
+        for i in idx..(self.operator_count as usize - 1) {
+            self.operators[i] = self.operators[i + 1];
+        }
+        
+        // Clear last slot and decrement count
+        self.operators[(self.operator_count - 1) as usize] = Pubkey::default();
+        self.operator_count -= 1;
+        
+        Ok(())
+    }
+    
+    /// Check if trading is allowed (not paused)
+    pub fn is_trading_allowed(&self) -> bool {
+        !self.trading_paused
+    }
+    
+    /// Pause trading
+    pub fn pause_trading(&mut self) {
+        self.trading_paused = true;
+    }
+    
+    /// Unpause trading
+    pub fn unpause_trading(&mut self) {
+        self.trading_paused = false;
     }
 
     /// Calculate taker fee rate based on price using smooth curve
