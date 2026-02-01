@@ -1,0 +1,58 @@
+# ============================================
+# Catallaxyz Docker Compose - Development
+# ============================================
+# Usage: docker-compose up -d
+# This file is for local development only
+
+version: '3.8'
+
+services:
+  # Redis for CLOB order matching
+  redis:
+    image: redis:7-alpine
+    container_name: catallaxyz-redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # Backend API (development mode)
+  backend:
+    build:
+      context: .
+      dockerfile: apps/backend/Dockerfile
+    container_name: catallaxyz-backend
+    ports:
+      - "4000:4000"
+      - "3001:3001"
+      - "3002:3002"
+      - "3003:3003"
+    environment:
+      - NODE_ENV=development
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+    env_file:
+      - ./apps/backend/.env
+    depends_on:
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:4000/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+    restart: unless-stopped
+
+volumes:
+  redis-data:
+
+networks:
+  default:
+    name: catallaxyz-network

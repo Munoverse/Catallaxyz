@@ -140,8 +140,7 @@ pub fn handler(ctx: Context<CreateMarket>, params: CreateMarketParams) -> Result
     market.switchboard_queue = ctx.accounts.switchboard_queue.key();
     market.randomness_account = ctx.accounts.randomness_account.key();
     
-    // Reserved for optional tokenized positions (unused for position-based markets).
-    market.outcome_token_mints = [Pubkey::default(); crate::constants::MAX_OUTCOME_TOKENS];
+    // Position tracking (no tokenized positions - prevents OTC trading)
     market.total_position_collateral = 0;
     market.total_yes_supply = 0;
     market.total_no_supply = 0;

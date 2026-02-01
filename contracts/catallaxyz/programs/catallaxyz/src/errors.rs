@@ -2,24 +2,15 @@ use anchor_lang::prelude::*;
 
 #[error_code]
 pub enum TerminatorError {
-    #[msg("Invalid probability: must be between 0 and 1")]
-    InvalidProbability,
-
+    // ============================================
+    // Market State Errors
+    // ============================================
+    
     #[msg("Market is not active")]
     MarketNotActive,
 
     #[msg("Market is already settled")]
     MarketAlreadySettled,
-
-    #[msg("Settlement index mismatch")]
-    SettlementIndexMismatch,
-
-    #[msg("Invalid market type")]
-    InvalidMarketType,
-
-    // ============================================
-    // AUDIT FIX: Specific Market State Errors
-    // ============================================
     
     #[msg("Market is paused")]
     MarketPaused,
@@ -27,17 +18,79 @@ pub enum TerminatorError {
     #[msg("Market is not paused")]
     MarketNotPaused,
     
+    #[msg("Invalid market")]
+    InvalidMarket,
+
+    // ============================================
+    // Input Validation Errors
+    // ============================================
+    
+    #[msg("Invalid probability: must be between 0 and 1")]
+    InvalidProbability,
+    
+    #[msg("Invalid input")]
+    InvalidInput,
+    
+    #[msg("Invalid amount")]
+    InvalidAmount,
+    
+    #[msg("Invalid outcome")]
+    InvalidOutcome,
+
+    #[msg("Invalid outcome index")]
+    InvalidOutcomeIndex,
+
+    // ============================================
+    // Account & Authorization Errors
+    // ============================================
+    
+    #[msg("Unauthorized")]
+    Unauthorized,
+    
+    #[msg("Invalid account input")]
+    InvalidAccountInput,
+    
+    #[msg("Invalid global account")]
+    InvalidGlobalAccount,
+    
+    #[msg("Invalid USDC mint")]
+    InvalidUsdcMint,
+
+    #[msg("Invalid token mint")]
+    InvalidTokenMint,
+    
+    #[msg("Invalid token account owner")]
+    InvalidTokenAccountOwner,
+
+    // ============================================
+    // Balance & Supply Errors
+    // ============================================
+
+    #[msg("Insufficient balance")]
+    InsufficientBalance,
+
+    #[msg("Insufficient vault balance")]
+    InsufficientVaultBalance,
+
+    #[msg("Insufficient outcome positions")]
+    InsufficientOutcomeTokens,
+
+    #[msg("Arithmetic overflow")]
+    ArithmeticOverflow,
+
+    // ============================================
+    // Trade Reference Errors
+    // ============================================
+    
     #[msg("Missing reference agent")]
     MissingReferenceAgent,
     
     #[msg("Missing last trade outcome")]
     MissingLastTradeOutcome,
-    
-    #[msg("Invalid USDC mint")]
-    InvalidUsdcMint,
 
-    #[msg("Maximum settlements reached")]
-    MaxSettlementsReached,
+    // ============================================
+    // Switchboard VRF Errors
+    // ============================================
 
     #[msg("Invalid Switchboard oracle")]
     InvalidSwitchboardOracle,
@@ -45,96 +98,28 @@ pub enum TerminatorError {
     #[msg("Switchboard oracle update required")]
     SwitchboardUpdateRequired,
 
-    #[msg("Insufficient balance")]
-    InsufficientBalance,
-
-    #[msg("Unauthorized")]
-    Unauthorized,
-
-    #[msg("Arithmetic overflow")]
-    ArithmeticOverflow,
-
-    #[msg("Invalid liquidity parameter")]
-    InvalidLiquidityParameter,
-
-    #[msg("Insufficient liquidity")]
-    InsufficientLiquidity,
+    // ============================================
+    // Fee Errors
+    // ============================================
 
     #[msg("Invalid fee rate")]
     InvalidFeeRate,
+    
+    #[msg("Invalid fee rate configuration")]
+    InvalidFeeConfiguration,
+    
+    #[msg("Fee rate too high")]
+    FeeTooHigh,
 
-    #[msg("Pool not active")]
-    PoolNotActive,
-
-    #[msg("Invalid market")]
-    InvalidMarket,
-
-    #[msg("Invalid token mint")]
-    InvalidTokenMint,
-
-    #[msg("Invalid outcome")]
-    InvalidOutcome,
-
-    #[msg("Invalid amount")]
-    InvalidAmount,
-
-    #[msg("Slippage exceeded")]
-    SlippageExceeded,
-
-    #[msg("Insufficient reserve")]
-    InsufficientReserve,
-
-
-    #[msg("Math overflow")]
-    MathOverflow,
-
-    #[msg("Invalid input")]
-    InvalidInput,
+    // ============================================
+    // Signature Errors
+    // ============================================
 
     #[msg("Invalid signature")]
     InvalidSignature,
 
-    #[msg("Insufficient vault balance")]
-    InsufficientVaultBalance,
-
-    #[msg("Tokens not initialized")]
-    TokensNotInitialized,
-
-    #[msg("Invalid outcome count: must be between 2 and 10")]
-    InvalidOutcomeCount,
-
-    #[msg("Not a binary market")]
-    NotBinaryMarket,
-
-    #[msg("Insufficient outcome positions")]
-    InsufficientOutcomeTokens,
-
-    #[msg("Invalid outcome index")]
-    InvalidOutcomeIndex,
-    
-    #[msg("Invalid mint")]
-    InvalidMint,
-    
-    #[msg("Invalid token account owner")]
-    InvalidTokenAccountOwner,
-    
-    #[msg("Invalid account input")]
-    InvalidAccountInput,
-    
-    #[msg("Tokens already initialized")]
-    TokensAlreadyInitialized,
-    
-    #[msg("Mint already initialized")]
-    MintAlreadyInitialized,
-    
-    #[msg("Outcome count mismatch")]
-    OutcomeCountMismatch,
-
-    #[msg("No convertible positions")]
-    NoConvertiblePositions,
-
     // ============================================
-    // Random Termination & Redemption Errors
+    // Termination & Redemption Errors
     // ============================================
     
     #[msg("Market has been terminated")]
@@ -150,21 +135,7 @@ pub enum TerminatorError {
     InsufficientOutcomeTokensForRedemption,
     
     // ============================================
-    // Fee Errors
-    // ============================================
-    
-    #[msg("Invalid fee rate configuration")]
-    InvalidFeeConfiguration,
-    
-    // ============================================
-    // Account Validation Errors
-    // ============================================
-    
-    #[msg("Invalid global account")]
-    InvalidGlobalAccount,
-    
-    // ============================================
-    // Exchange (Polymarket-style) Errors
+    // Exchange (CLOB) Errors
     // ============================================
     
     #[msg("Trading is paused")]
@@ -184,6 +155,10 @@ pub enum TerminatorError {
     
     #[msg("Operator not found")]
     OperatorNotFound,
+
+    // ============================================
+    // Order Errors
+    // ============================================
     
     #[msg("Order expired")]
     OrderExpired,
@@ -193,9 +168,6 @@ pub enum TerminatorError {
     
     #[msg("Invalid nonce")]
     InvalidNonce,
-    
-    #[msg("Fee rate too high")]
-    FeeTooHigh,
     
     #[msg("Orders not crossing (prices don't match)")]
     NotCrossing,

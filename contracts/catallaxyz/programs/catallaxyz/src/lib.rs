@@ -14,7 +14,7 @@ pub mod utils;
 #[allow(ambiguous_glob_reexports)]
 use instructions::*;
 
-declare_id!("Ee5zAUK33g3AnAFEHLmcwQeqahar8EqmVjkovCaGtsNg");
+declare_id!("4Vpqj1dsjLX7cQ3z85Sh3ZUQ1Adz7rdzvMQnbtgx7n9u");
 
 #[program]
 pub mod catallaxyz {

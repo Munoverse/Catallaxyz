@@ -57,7 +57,6 @@ export interface MarketAccount {
   lastPriceUpdateAt: number;
   
   // Nonce tracking (AUDIT FIX: Added missing fields)
-  settleTradeNonce: bigint;  // For settle_trade instruction
   tradeNonce: bigint;        // For randomness check
   
   // Fee configuration

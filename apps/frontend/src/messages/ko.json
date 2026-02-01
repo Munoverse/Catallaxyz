@@ -1,0 +1,195 @@
+{
+  "header": {
+    "logIn": "로그인",
+    "signUp": "가입하기",
+    "rewards": "보상",
+    "documentation": "문서",
+    "termsOfUse": "이용 약관",
+    "cash": "현금",
+    "twish": "Twish",
+    "search": {
+      "placeholder": "소원 및 프로필 검색"
+    },
+    "howItWorks": "작동 방식",
+    "wish": "소원",
+    "theme": {
+      "light": "라이트",
+      "dark": "다크"
+    },
+    "navigation": {
+      "trending": "트렌딩",
+      "recommended": "추천",
+      "allMarkets": "모든 시장",
+      "following": "팔로잉",
+      "explore": "탐색",
+      "leaderboard": "리더보드",
+      "tipLeaderboard": "팁 랭킹",
+      "tipHistory": "팁 내역",
+      "rewards": "보상",
+      "documentation": "문서",
+      "termsOfUse": "이용 약관",
+      "theme": "테마",
+      "language": "언어"
+    }
+  },
+  "sidebar": {
+    "recommended": "추천 시장"
+  },
+  "home": {
+    "recommendedTitle": "추천 시장",
+    "recommendedSubtitle": "Twish 팁 순",
+    "noMarkets": "시장 없음",
+    "connectWallet": "지갑을 연결하여 시장을 확인하세요",
+    "settlements": "정산"
+  },
+  "markets": {
+    "title": "모든 시장",
+    "subtitle": "필터로 시장을 탐색하세요",
+    "searchPlaceholder": "시장 검색...",
+    "categoryLabel": "카테고리",
+    "statusLabel": "상태",
+    "sortLabel": "정렬",
+    "empty": "시장 없음",
+    "createFirst": "첫 번째 시장 만들기",
+    "categories": {
+      "all": "전체 카테고리",
+      "wealth": "부",
+      "physical_health": "신체 건강",
+      "mental_health": "정신 건강",
+      "family_friends": "가족 및 친구",
+      "happiness": "행복",
+      "self_growth": "자기 성장",
+      "career_achievement": "경력 성취",
+      "relationships": "관계",
+      "luck": "행운",
+      "macro_vision": "거시 비전"
+    },
+    "status": {
+      "all": "전체",
+      "active": "진행 중",
+      "settled": "정산 완료",
+      "terminated": "종료됨",
+      "closed": "닫힘"
+    },
+    "sort": {
+      "newest": "최신순",
+      "oldest": "오래된순",
+      "tip": "팁 많은순"
+    }
+  },
+  "tips": {
+    "period": {
+      "day": "24시간",
+      "week": "7일",
+      "month": "30일",
+      "all": "전체"
+    },
+    "type": {
+      "all": "모든 팁",
+      "market": "시장 팁",
+      "comment": "댓글 팁"
+    },
+    "direction": {
+      "all": "전체",
+      "sent": "보냄",
+      "received": "받음"
+    },
+    "leaderboard": {
+      "title": "팁 랭킹",
+      "subtitle": "팁 금액 기준 상위 창작자",
+      "tableTitle": "상위 팁",
+      "count": "{{count}}명",
+      "empty": "아직 팁이 없습니다",
+      "tipCount": "{{count}}회"
+    },
+    "history": {
+      "title": "팁 내역",
+      "subtitle": "보낸 팁과 받은 팁을 확인하세요",
+      "loginRequired": "팁 내역을 보려면 로그인하세요",
+      "tableTitle": "팁 기록",
+      "count": "{{count}}건",
+      "empty": "팁 기록 없음",
+      "marketFallback": "시장",
+      "commentFallback": "댓글",
+      "sentTo": "받는 사람",
+      "receivedFrom": "보낸 사람"
+    }
+  },
+  "twish": {
+    "subtitle": "임베디드 지갑의 {{token}} 잔액과 송금을 관리합니다.",
+    "walletAddress": "임베디드 지갑 주소",
+    "copyAddress": "주소 복사",
+    "copied": "{{label}} 복사됨",
+    "copyFailed": "복사 실패",
+    "notLoggedIn": "로그인되지 않음",
+    "loginRequired": "지갑에 로그인하세요",
+    "notConfigured": "Twish가 설정되지 않았습니다",
+    "mintMissing": "토큰 Mint가 없습니다",
+    "missingInfo": "정보가 부족합니다",
+    "enterRecipientAmount": "수신자와 금액을 입력하세요",
+    "invalidAddress": "잘못된 주소",
+    "invalidAddressDescription": "수신자 주소가 유효하지 않습니다",
+    "invalidAmount": "잘못된 금액",
+    "invalidAmountDescription": "유효한 금액을 입력하세요",
+    "transferSent": "전송 완료",
+    "transferFailed": "전송 실패",
+    "transferFailedDescription": "Twish를 전송할 수 없습니다",
+    "loginTitle": "임베디드 지갑에 로그인",
+    "loginSubtitle": "소셜 로그인 또는 외부 지갑을 연결하세요.",
+    "receiveTitle": "{{token}} 받기",
+    "receiveDescription": "{{token}}를 임베디드 지갑으로 전송해 충전하세요.",
+    "mintLabel": "토큰 Mint",
+    "balanceLabel": "현재 잔액",
+    "sendTitle": "{{token}} 보내기",
+    "recipientLabel": "수신자 주소",
+    "recipientPlaceholder": "지갑 주소",
+    "amountLabel": "금액",
+    "amountPlaceholder": "금액 ({{token}})",
+    "sending": "전송 중...",
+    "sendCta": "{{token}} 보내기"
+  },
+  "common": {
+    "loading": "로딩 중...",
+    "error": "오류",
+    "success": "성공"
+  },
+  "wish": {
+    "createWish": "소원 만들기",
+    "createWishDescription": "자신의 소원을 만들고 다른 사람들이 참여하도록 하세요",
+    "title": "제목",
+    "titlePlaceholder": "나는 ...을 원합니다",
+    "titleRequired": "제목은 필수입니다",
+    "titleMaxLength": "제목은 150자를 초과할 수 없습니다",
+    "content": "내용",
+    "contentPlaceholder": "소원의 상세 설명 입력 (선택사항)",
+    "contentRequired": "내용은 필수입니다",
+    "contentMaxLength": "내용은 500자를 초과할 수 없습니다",
+    "characters": "자",
+    "options": "옵션",
+    "option": "옵션",
+    "addOption": "옵션 추가",
+    "minOptionsHint": "최소 2개의 옵션이 필요합니다",
+    "optionsHint": "팁: '행운 얻기'와 '행운 잃기'와 같이 대조적인 옵션을 설정하는 것이 좋습니다. '행운 얻기'를 거래할 때 사용자는 축복을 받는 사람의 이름/닉네임/별명을 입력할 수 있습니다. '행운 잃기'를 거래할 때 사용자는 이름/닉네임/별명을 입력할 수 있습니다. 악한 소원을 빌 수도 있지만, 부정과 성취 모두에 대한 옵션을 설정해야 합니다.",
+    "minOptionsError": "최소 2개의 옵션이 필요합니다",
+    "optionFieldsRequired": "옵션 설명과 티켓은 모두 필수입니다",
+    "optionDescription": "설명",
+    "optionDescriptionPlaceholder": "옵션 설명 입력",
+    "optionTicket": "옵션",
+    "optionTicketPlaceholder": "옵션 입력",
+    "startTime": "시작 시간",
+    "startTimeRequired": "시작 시간은 필수입니다",
+    "endTime": "종료 시간",
+    "endTimeRequired": "종료 시간은 필수입니다",
+    "endTime7Days": "7일",
+    "endTime1Month": "1개월",
+    "endTime1Year": "1년",
+    "timeRangeError": "종료 시간은 시작 시간보다 늦어야 합니다",
+    "creating": "만드는 중...",
+    "createSuccess": "소원이 성공적으로 생성되었습니다!",
+    "createError": "소원 생성에 실패했습니다. 다시 시도해 주세요.",
+    "cancel": "취소",
+    "connectWalletFirst": "먼저 지갑을 연결해 주세요",
+    "deployProxyWalletFirst": "먼저 프록시 지갑을 배포해 주세요"
+  }
+}
+

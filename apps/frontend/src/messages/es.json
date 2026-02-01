@@ -1,0 +1,195 @@
+{
+  "header": {
+    "logIn": "Iniciar sesión",
+    "signUp": "Registrarse",
+    "rewards": "Recompensas",
+    "documentation": "Documentación",
+    "termsOfUse": "Términos de uso",
+    "cash": "Efectivo",
+    "twish": "Twish",
+    "search": {
+      "placeholder": "Buscar deseos y perfiles"
+    },
+    "howItWorks": "Cómo funciona",
+    "wish": "Deseo",
+    "theme": {
+      "light": "Claro",
+      "dark": "Oscuro"
+    },
+    "navigation": {
+      "trending": "Tendencias",
+      "recommended": "Recomendado",
+      "allMarkets": "Todos los mercados",
+      "following": "Siguiendo",
+      "explore": "Explorar",
+      "leaderboard": "Clasificación",
+      "tipLeaderboard": "Ranking de propinas",
+      "tipHistory": "Historial de propinas",
+      "rewards": "Recompensas",
+      "documentation": "Documentación",
+      "termsOfUse": "Términos de uso",
+      "theme": "Tema",
+      "language": "Idioma"
+    }
+  },
+  "sidebar": {
+    "recommended": "Mercados recomendados"
+  },
+  "home": {
+    "recommendedTitle": "Mercados recomendados",
+    "recommendedSubtitle": "Ordenados por propinas de Twish",
+    "noMarkets": "No se encontraron mercados",
+    "connectWallet": "Conecta tu billetera para ver mercados",
+    "settlements": "Liquidaciones"
+  },
+  "markets": {
+    "title": "Todos los mercados",
+    "subtitle": "Explora todos los mercados con filtros",
+    "searchPlaceholder": "Buscar mercados...",
+    "categoryLabel": "Categoría",
+    "statusLabel": "Estado",
+    "sortLabel": "Ordenar por",
+    "empty": "No se encontraron mercados",
+    "createFirst": "Crea el primer mercado",
+    "categories": {
+      "all": "Todas las categorías",
+      "wealth": "Riqueza",
+      "physical_health": "Salud física",
+      "mental_health": "Salud mental",
+      "family_friends": "Familia y amigos",
+      "happiness": "Felicidad",
+      "self_growth": "Crecimiento personal",
+      "career_achievement": "Logros profesionales",
+      "relationships": "Relaciones",
+      "luck": "Suerte",
+      "macro_vision": "Visión macro"
+    },
+    "status": {
+      "all": "Todos",
+      "active": "Activo",
+      "settled": "Liquidado",
+      "terminated": "Terminado",
+      "closed": "Cerrado"
+    },
+    "sort": {
+      "newest": "Más nuevos",
+      "oldest": "Más antiguos",
+      "tip": "Más propinas"
+    }
+  },
+  "tips": {
+    "period": {
+      "day": "24h",
+      "week": "7d",
+      "month": "30d",
+      "all": "Todo"
+    },
+    "type": {
+      "all": "Todas las propinas",
+      "market": "Propinas de mercados",
+      "comment": "Propinas de comentarios"
+    },
+    "direction": {
+      "all": "Todo",
+      "sent": "Enviadas",
+      "received": "Recibidas"
+    },
+    "leaderboard": {
+      "title": "Ranking de propinas",
+      "subtitle": "Creadores principales por monto de propinas",
+      "tableTitle": "Top propinas",
+      "count": "{{count}} usuarios",
+      "empty": "Aún no hay propinas",
+      "tipCount": "{{count}} propinas"
+    },
+    "history": {
+      "title": "Historial de propinas",
+      "subtitle": "Tus propinas enviadas y recibidas",
+      "loginRequired": "Inicia sesión para ver el historial de propinas",
+      "tableTitle": "Registros de propinas",
+      "count": "{{count}} registros",
+      "empty": "Sin registros de propinas",
+      "marketFallback": "Mercado",
+      "commentFallback": "Comentario",
+      "sentTo": "Enviado a",
+      "receivedFrom": "De"
+    }
+  },
+  "twish": {
+    "subtitle": "Administra tu saldo y transferencias de {{token}}.",
+    "walletAddress": "Dirección de billetera integrada",
+    "copyAddress": "Copiar dirección",
+    "copied": "{{label}} copiado",
+    "copyFailed": "Error al copiar",
+    "notLoggedIn": "No has iniciado sesión",
+    "loginRequired": "Inicia sesión en tu billetera",
+    "notConfigured": "Twish no está configurado",
+    "mintMissing": "Falta el mint del token",
+    "missingInfo": "Falta información",
+    "enterRecipientAmount": "Ingresa destinatario y monto",
+    "invalidAddress": "Dirección inválida",
+    "invalidAddressDescription": "La dirección del destinatario es inválida",
+    "invalidAmount": "Monto inválido",
+    "invalidAmountDescription": "Ingresa un monto válido",
+    "transferSent": "Transferencia enviada",
+    "transferFailed": "Error en la transferencia",
+    "transferFailedDescription": "No se pudo enviar Twish",
+    "loginTitle": "Inicia sesión en tu billetera integrada",
+    "loginSubtitle": "Usa inicio social o conecta una billetera externa.",
+    "receiveTitle": "Recibir {{token}}",
+    "receiveDescription": "Envía {{token}} a tu billetera integrada para recargar.",
+    "mintLabel": "Mint del token",
+    "balanceLabel": "Saldo actual",
+    "sendTitle": "Enviar {{token}}",
+    "recipientLabel": "Dirección del destinatario",
+    "recipientPlaceholder": "Dirección de billetera",
+    "amountLabel": "Monto",
+    "amountPlaceholder": "Monto ({{token}})",
+    "sending": "Enviando...",
+    "sendCta": "Enviar {{token}}"
+  },
+  "common": {
+    "loading": "Cargando...",
+    "error": "Error",
+    "success": "Éxito"
+  },
+  "wish": {
+    "createWish": "Crear Deseo",
+    "createWishDescription": "Crea tu propio deseo y deja que otros participen",
+    "title": "Título",
+    "titlePlaceholder": "Deseo ...",
+    "titleRequired": "El título es obligatorio",
+    "titleMaxLength": "El título no puede exceder 150 caracteres",
+    "content": "Contenido",
+    "contentPlaceholder": "Ingrese la descripción detallada de su deseo (opcional)",
+    "contentRequired": "El contenido es obligatorio",
+    "contentMaxLength": "El contenido no puede exceder 500 caracteres",
+    "characters": "caracteres",
+    "options": "Opciones",
+    "option": "Opción",
+    "addOption": "Agregar Opción",
+    "minOptionsHint": "Se requieren al menos 2 opciones",
+    "optionsHint": "Consejo: Se recomienda establecer opciones contrastantes, como 'ganar buena suerte' y 'perder buena suerte'. Al operar 'ganar buena suerte', los usuarios pueden completar el nombre/apodo/alias de la persona que recibe la bendición. Al operar 'perder buena suerte', los usuarios pueden completar el nombre/apodo/alias. También puedes hacer un deseo malvado, pero necesitas establecer opciones tanto para la negación como para el cumplimiento.",
+    "minOptionsError": "Se requieren al menos 2 opciones",
+    "optionFieldsRequired": "La descripción y el ticket de la opción son obligatorios",
+    "optionDescription": "Descripción",
+    "optionDescriptionPlaceholder": "Ingrese la descripción de la opción",
+    "optionTicket": "Opción",
+    "optionTicketPlaceholder": "Ingrese la opción",
+    "startTime": "Hora de Inicio",
+    "startTimeRequired": "La hora de inicio es obligatoria",
+    "endTime": "Hora de Finalización",
+    "endTimeRequired": "La hora de finalización es obligatoria",
+    "endTime7Days": "7 Días",
+    "endTime1Month": "1 Mes",
+    "endTime1Year": "1 Año",
+    "timeRangeError": "La hora de finalización debe ser posterior a la hora de inicio",
+    "creating": "Creando...",
+    "createSuccess": "¡Deseo creado con éxito!",
+    "createError": "Error al crear el deseo. Por favor, inténtelo de nuevo.",
+    "cancel": "Cancelar",
+    "connectWalletFirst": "Por favor, conecte su billetera primero",
+    "deployProxyWalletFirst": "Por favor, implemente su billetera proxy primero"
+  }
+}
+

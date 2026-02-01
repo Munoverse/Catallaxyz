@@ -1,0 +1,195 @@
+{
+  "header": {
+    "logIn": "تسجيل الدخول",
+    "signUp": "إنشاء حساب",
+    "rewards": "المكافآت",
+    "documentation": "التوثيق",
+    "termsOfUse": "شروط الاستخدام",
+    "cash": "نقد",
+    "twish": "Twish",
+    "search": {
+      "placeholder": "البحث عن الأمنيات والملفات الشخصية"
+    },
+    "howItWorks": "كيف يعمل",
+    "wish": "أمنية",
+    "theme": {
+      "light": "فاتح",
+      "dark": "داكن"
+    },
+    "navigation": {
+      "trending": "رائج",
+      "recommended": "موصى به",
+      "allMarkets": "كل الأسواق",
+      "following": "متابَع",
+      "explore": "استكشف",
+      "leaderboard": "لوحة المتصدرين",
+      "tipLeaderboard": "ترتيب الإكراميات",
+      "tipHistory": "سجل الإكراميات",
+      "rewards": "المكافآت",
+      "documentation": "التوثيق",
+      "termsOfUse": "شروط الاستخدام",
+      "theme": "المظهر",
+      "language": "اللغة"
+    }
+  },
+  "sidebar": {
+    "recommended": "أسواق موصى بها"
+  },
+  "home": {
+    "recommendedTitle": "الأسواق الموصى بها",
+    "recommendedSubtitle": "مرتبة حسب إكراميات Twish",
+    "noMarkets": "لا توجد أسواق",
+    "connectWallet": "يرجى توصيل المحفظة لعرض الأسواق",
+    "settlements": "التسويات"
+  },
+  "markets": {
+    "title": "كل الأسواق",
+    "subtitle": "استعرض كل الأسواق مع الفلاتر",
+    "searchPlaceholder": "ابحث عن الأسواق...",
+    "categoryLabel": "الفئة",
+    "statusLabel": "الحالة",
+    "sortLabel": "ترتيب حسب",
+    "empty": "لا توجد أسواق",
+    "createFirst": "أنشئ أول سوق",
+    "categories": {
+      "all": "كل الفئات",
+      "wealth": "الثروة",
+      "physical_health": "الصحة البدنية",
+      "mental_health": "الصحة النفسية",
+      "family_friends": "العائلة والأصدقاء",
+      "happiness": "السعادة",
+      "self_growth": "التطور الذاتي",
+      "career_achievement": "الإنجاز المهني",
+      "relationships": "العلاقات",
+      "luck": "الحظ",
+      "macro_vision": "الرؤية الكلية"
+    },
+    "status": {
+      "all": "الكل",
+      "active": "نشط",
+      "settled": "مُسوى",
+      "terminated": "منتهٍ",
+      "closed": "مغلق"
+    },
+    "sort": {
+      "newest": "الأحدث أولًا",
+      "oldest": "الأقدم أولًا",
+      "tip": "الأكثر إكراميات"
+    }
+  },
+  "tips": {
+    "period": {
+      "day": "24س",
+      "week": "7أيام",
+      "month": "30يوم",
+      "all": "الكل"
+    },
+    "type": {
+      "all": "كل الإكراميات",
+      "market": "إكراميات السوق",
+      "comment": "إكراميات التعليقات"
+    },
+    "direction": {
+      "all": "الكل",
+      "sent": "مرسلة",
+      "received": "مستلمة"
+    },
+    "leaderboard": {
+      "title": "ترتيب الإكراميات",
+      "subtitle": "أفضل المنشئين حسب مبلغ الإكراميات",
+      "tableTitle": "أفضل الإكراميات",
+      "count": "{{count}} مستخدم",
+      "empty": "لا توجد إكراميات بعد",
+      "tipCount": "{{count}} إكرامية"
+    },
+    "history": {
+      "title": "سجل الإكراميات",
+      "subtitle": "إكرامياتك المرسلة والمستلمة",
+      "loginRequired": "سجّل الدخول لعرض سجل الإكراميات",
+      "tableTitle": "سجل الإكراميات",
+      "count": "{{count}} سجل",
+      "empty": "لا توجد سجلات",
+      "marketFallback": "سوق",
+      "commentFallback": "تعليق",
+      "sentTo": "مرسلة إلى",
+      "receivedFrom": "من"
+    }
+  },
+  "twish": {
+    "subtitle": "إدارة رصيد {{token}} والتحويلات.",
+    "walletAddress": "عنوان المحفظة المضمنة",
+    "copyAddress": "نسخ العنوان",
+    "copied": "تم نسخ {{label}}",
+    "copyFailed": "فشل النسخ",
+    "notLoggedIn": "غير مسجل الدخول",
+    "loginRequired": "يرجى تسجيل الدخول إلى المحفظة",
+    "notConfigured": "Twish غير مُعد",
+    "mintMissing": "رمز Mint مفقود",
+    "missingInfo": "معلومات ناقصة",
+    "enterRecipientAmount": "أدخل المستلم والمبلغ",
+    "invalidAddress": "عنوان غير صالح",
+    "invalidAddressDescription": "عنوان المستلم غير صالح",
+    "invalidAmount": "مبلغ غير صالح",
+    "invalidAmountDescription": "أدخل مبلغًا صالحًا",
+    "transferSent": "تم إرسال التحويل",
+    "transferFailed": "فشل التحويل",
+    "transferFailedDescription": "تعذر إرسال Twish",
+    "loginTitle": "سجل الدخول إلى المحفظة المضمنة",
+    "loginSubtitle": "استخدم تسجيل الدخول الاجتماعي أو اربط محفظة خارجية.",
+    "receiveTitle": "استلام {{token}}",
+    "receiveDescription": "أرسل {{token}} إلى محفظتك المضمنة للشحن.",
+    "mintLabel": "Mint الرمز",
+    "balanceLabel": "الرصيد الحالي",
+    "sendTitle": "إرسال {{token}}",
+    "recipientLabel": "عنوان المستلم",
+    "recipientPlaceholder": "عنوان المحفظة",
+    "amountLabel": "المبلغ",
+    "amountPlaceholder": "المبلغ ({{token}})",
+    "sending": "جارٍ الإرسال...",
+    "sendCta": "إرسال {{token}}"
+  },
+  "common": {
+    "loading": "جاري التحميل...",
+    "error": "خطأ",
+    "success": "نجح"
+  },
+  "wish": {
+    "createWish": "إنشاء أمنية",
+    "createWishDescription": "أنشئ أمنيتك الخاصة ودع الآخرين يشاركون",
+    "title": "العنوان",
+    "titlePlaceholder": "أتمنى ...",
+    "titleRequired": "العنوان مطلوب",
+    "titleMaxLength": "لا يمكن أن يتجاوز العنوان 150 حرفًا",
+    "content": "المحتوى",
+    "contentPlaceholder": "أدخل وصفًا تفصيليًا لأمنيتك (اختياري)",
+    "contentRequired": "المحتوى مطلوب",
+    "contentMaxLength": "لا يمكن أن يتجاوز المحتوى 500 حرف",
+    "characters": "حرف",
+    "options": "الخيارات",
+    "option": "خيار",
+    "addOption": "إضافة خيار",
+    "minOptionsHint": "يُطلب خياران على الأقل",
+    "optionsHint": "نصيحة: يُنصح بتعيين خيارات متباينة، مثل 'الحصول على الحظ' و'فقدان الحظ'. عند تداول 'الحصول على الحظ'، يمكن للمستخدمين ملء اسم/لقب/اسم مستعار للشخص الذي يتلقى البركة. عند تداول 'فقدان الحظ'، يمكن للمستخدمين ملء الاسم/اللقب/الاسم المستعار. يمكنك أيضًا تقديم أمنية شريرة، لكنك تحتاج إلى تعيين خيارات لكل من النفي والتحقق.",
+    "minOptionsError": "يُطلب خياران على الأقل",
+    "optionFieldsRequired": "وصف الخيار والتذكرة مطلوبان",
+    "optionDescription": "الوصف",
+    "optionDescriptionPlaceholder": "أدخل وصف الخيار",
+    "optionTicket": "خيار",
+    "optionTicketPlaceholder": "أدخل الخيار",
+    "startTime": "وقت البدء",
+    "startTimeRequired": "وقت البدء مطلوب",
+    "endTime": "وقت الانتهاء",
+    "endTimeRequired": "وقت الانتهاء مطلوب",
+    "endTime7Days": "7 أيام",
+    "endTime1Month": "شهر واحد",
+    "endTime1Year": "سنة واحدة",
+    "timeRangeError": "يجب أن يكون وقت الانتهاء بعد وقت البدء",
+    "creating": "جاري الإنشاء...",
+    "createSuccess": "تم إنشاء الأمنية بنجاح!",
+    "createError": "فشل إنشاء الأمنية. يرجى المحاولة مرة أخرى.",
+    "cancel": "إلغاء",
+    "connectWalletFirst": "يرجى الاتصال بمحفظتك أولاً",
+    "deployProxyWalletFirst": "يرجى نشر محفظة الوكيل أولاً"
+  }
+}
+

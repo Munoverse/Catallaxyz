@@ -1,77 +1,17 @@
+//! Utility functions for price validation and common operations
+//!
+//! This module provides shared utility functions used across the program.
+//! 
+//! Note: Fee calculation functions are consolidated in instructions/calculator.rs
+//! to avoid duplication.
+
 use crate::constants::{PRICE_SCALE, PRICE_TOLERANCE};
 use crate::errors::TerminatorError;
 use anchor_lang::prelude::*;
 
-/// Result of fee computation for a trade
-#[derive(Debug, Clone, Copy)]
-pub struct TradeFeesResult {
-    pub taker_fee: u64,
-    pub maker_rebate: u64,
-    pub platform_fee: u64,
-    pub creator_incentive: u64,
-}
-
-/// Calculate trading fees for a given trade size and price.
-///
-/// # Arguments
-/// * `size` - Trade size in lamports (6 decimals)
-/// * `price` - Trade price in lamports (6 decimals, 0-1_000_000)
-/// * `base_fee_rate` - Base fee rate (scaled by 10^6)
-/// * `platform_fee_rate` - Platform's share of fees (scaled by 10^6)
-/// * `maker_rebate_rate` - Maker rebate rate (scaled by 10^6)
-/// * `creator_incentive_rate` - Creator incentive rate (scaled by 10^6)
-///
-/// # Returns
-/// `TradeFeesResult` containing all computed fee components
-pub fn compute_trade_fees(
-    size: u64,
-    price: u64,
-    base_fee_rate: u32,
-    platform_fee_rate: u32,
-    maker_rebate_rate: u32,
-    creator_incentive_rate: u32,
-) -> Result<TradeFeesResult> {
-    // Trade value = size * price / 1_000_000
-    let trade_value = (size as u128)
-        .checked_mul(price as u128)
-        .and_then(|x| x.checked_div(PRICE_SCALE as u128))
-        .ok_or(TerminatorError::ArithmeticOverflow)? as u64;
-
-    // Taker fee = trade_value * base_fee_rate / 1_000_000
-    let taker_fee = (trade_value as u128)
-        .checked_mul(base_fee_rate as u128)
-        .and_then(|x| x.checked_div(PRICE_SCALE as u128))
-        .ok_or(TerminatorError::ArithmeticOverflow)? as u64;
-
-    // Maker rebate = trade_value * maker_rebate_rate / 1_000_000
-    let maker_rebate = (trade_value as u128)
-        .checked_mul(maker_rebate_rate as u128)
-        .and_then(|x| x.checked_div(PRICE_SCALE as u128))
-        .ok_or(TerminatorError::ArithmeticOverflow)? as u64;
-
-    // Platform fee = taker_fee * platform_fee_rate / 1_000_000
-    let platform_fee = (taker_fee as u128)
-        .checked_mul(platform_fee_rate as u128)
-        .and_then(|x| x.checked_div(PRICE_SCALE as u128))
-        .ok_or(TerminatorError::ArithmeticOverflow)? as u64;
-
-    // Creator incentive = taker_fee * creator_incentive_rate / 1_000_000
-    let creator_incentive = (taker_fee as u128)
-        .checked_mul(creator_incentive_rate as u128)
-        .and_then(|x| x.checked_div(PRICE_SCALE as u128))
-        .ok_or(TerminatorError::ArithmeticOverflow)? as u64;
-
-    Ok(TradeFeesResult {
-        taker_fee,
-        maker_rebate,
-        platform_fee,
-        creator_incentive,
-    })
-}
-
 /// Validate that a price is within the valid range [0, PRICE_SCALE].
 ///
-/// Use this for market trading (settle_trade) where prices are set freely by users.
+/// Use this for market trading where prices are set freely by users.
 /// In trading, YES and NO prices are independently determined by market orders
 /// and do NOT need to sum to 1.0.
 pub fn validate_price(price: u64) -> Result<()> {

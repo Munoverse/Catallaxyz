@@ -35,6 +35,7 @@ pub mod withdraw_reward_fees;
 // Exchange (Polymarket-style) Instructions
 // ============================================
 
+pub mod ed25519_verify;    // Shared Ed25519 signature verification
 pub mod calculator;        // Fee and price calculation utilities
 pub mod fill_order;        // Fill single order
 pub mod match_orders;      // Match taker against makers atomically

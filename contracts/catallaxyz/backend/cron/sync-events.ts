@@ -779,6 +779,11 @@ async function syncEvents(): Promise<number> {
       // Sort events by slot to process in order
       events.sort((a, b) => a.slot - b.slot);
       
+      // AUDIT FIX D-C4: Track failed events and only update sync state for successfully processed events
+      let lastSuccessfulSlot = state.lastSlot;
+      let lastSuccessfulSignature = state.lastSignature;
+      let hasFailures = false;
+      
       for (const event of events) {
         if (DRY_RUN) {
           logger.info('DRY_RUN: Would process event', { name: event.name, slot: event.slot });
@@ -788,6 +793,9 @@ async function syncEvents(): Promise<number> {
         const handler = eventHandlers[event.name];
         if (!handler) {
           logger.debug('No handler for event', { name: event.name });
+          // Events without handlers are considered "processed" - update state
+          lastSuccessfulSlot = Math.max(lastSuccessfulSlot, event.slot);
+          lastSuccessfulSignature = event.signature;
           continue;
         }
         
@@ -795,23 +803,51 @@ async function syncEvents(): Promise<number> {
           await handler(client, event);
           processedCount++;
           
-          state.lastSlot = Math.max(state.lastSlot, event.slot);
-          state.lastSignature = event.signature;
+          // Only update the successful state tracking after successful processing
+          lastSuccessfulSlot = Math.max(lastSuccessfulSlot, event.slot);
+          lastSuccessfulSignature = event.signature;
           state.eventsProcessed++;
         } catch (error) {
+          hasFailures = true;
           logger.error('Failed to process event', error, { event: event.name, signature: event.signature });
           
           // Log failed event for later retry
           try {
             await client.query(
-              `UPDATE public.event_log SET error = $2, processed = false WHERE transaction_signature = $1 AND event_type = $3`,
-              [event.signature, String(error), event.name]
+              `INSERT INTO public.event_log 
+               (event_type, transaction_signature, slot, block_time, program_id, event_data, processed, error)
+               VALUES ($1, $2, $3, to_timestamp($4), $5, $6, false, $7)
+               ON CONFLICT (transaction_signature, event_type) DO UPDATE SET
+                 error = EXCLUDED.error,
+                 processed = false`,
+              [
+                event.name,
+                event.signature,
+                event.slot,
+                event.blockTime,
+                PROGRAM_ID.toString(),
+                JSON.stringify(event.data),
+                String(error),
+              ]
             );
-          } catch {}
+          } catch (logError) {
+            logger.error('Failed to log event error', logError);
+          }
+          
+          // Stop processing at first failure to avoid skipping events
+          // This ensures we retry failed events on next sync
+          break;
         }
       }
       
+      // AUDIT FIX D-C4: Only update sync state to the last successfully processed event
+      state.lastSlot = lastSuccessfulSlot;
+      state.lastSignature = lastSuccessfulSignature;
       await updateSyncState(client, 'events', state);
+      
+      if (hasFailures) {
+        logger.warn('Event sync completed with failures - will retry failed events on next sync');
+      }
       
       logger.info('Event sync completed', { processedCount, totalProcessed: state.eventsProcessed });
       return processedCount;

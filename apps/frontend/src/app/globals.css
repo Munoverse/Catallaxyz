@@ -1,0 +1,237 @@
+@import 'tailwindcss';
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* ============ Light Mode ============ */
+  
+  /* Wish Fulfilled - Spiritual Green */
+  --yes: #3CE6B0;
+  --yes-foreground: #0F5A43;
+  /* Wish Failed - Fate Pink */
+  --no: #FF5C7C;
+  --no-foreground: #C03A52;
+  --radius: 0.625rem;
+  
+  /* Light background - pure white */
+  --background: #FFFFFF;
+  /* Primary text - dark */
+  --foreground: #1A1D2A;
+  
+  /* Card background - light gray */
+  --card: #F8F9FC;
+  --card-foreground: #1A1D2A;
+  --card-hover: #F0F2F7;
+  
+  /* Popover */
+  --popover: #FFFFFF;
+  --popover-foreground: #1A1D2A;
+  
+  /* Core theme color - Fate Purple */
+  --primary: #6D5DF6;
+  --primary-foreground: #FFFFFF;
+  
+  /* Secondary color */
+  --secondary: #F0F2F7;
+  --secondary-foreground: #1A1D2A;
+  
+  /* Muted color */
+  --muted: #F0F2F7;
+  --muted-foreground: #64697B;
+  
+  /* Accent color - Oracle Gold */
+  --accent: #F5C16C;
+  --accent-foreground: #1A1D2A;
+  
+  /* Destructive */
+  --destructive: #FF5C7C;
+  --destructive-foreground: #FFFFFF;
+  
+  /* Border */
+  --border: #E4E6EE;
+  
+  /* Input */
+  --input: #F8F9FC;
+  --input-hover: #E4E6EE;
+  
+  /* Focus ring */
+  --ring: #6D5DF6;
+}
+
+.dark {
+  /* ============ Dark Mode (Fate theme) ============ */
+  
+  /* 4️⃣ Success/Fulfilled - Wish Fulfilled (Spiritual Green) */
+  --yes: #3CE6B0;
+  --yes-foreground: #1A7A5F;
+  
+  /* 5️⃣ Failed/Unfulfilled - Wish Failed (Fate Pink) */
+  --no: #FF5C7C;
+  --no-foreground: #A03A4F;
+  
+  --radius: 0.625rem;
+  
+  /* 1️⃣ Mystic Indigo cosmic dark background */
+  --background: #0B0E1A;
+  
+  /* 6️⃣ Primary text */
+  --foreground: #E6E8F0;
+  
+  /* Card background - slightly lighter than background */
+  --card: #12151F;
+  --card-foreground: #E6E8F0;
+  --card-hover: #1A1D2A;
+  
+  /* Popover */
+  --popover: #12151F;
+  --popover-foreground: #E6E8F0;
+  
+  /* 2️⃣ Core theme - Fate Purple (cool tone, uncontrollable yet tradable) */
+  --primary: #6D5DF6;
+  --primary-foreground: #FFFFFF;
+  
+  /* Secondary color */
+  --secondary: #1E2230;
+  --secondary-foreground: #E6E8F0;
+  
+  /* Muted color */
+  --muted: #1A1D2A;
+  /* 6️⃣ Secondary text */
+  --muted-foreground: #9AA0C3;
+  
+  /* 3️⃣ Accent/Fate trigger - Oracle Gold */
+  --accent: #F5C16C;
+  --accent-foreground: #0B0E1A;
+  
+  /* Destructive - use Fate Pink */
+  --destructive: #FF5C7C;
+  --destructive-foreground: #FFFFFF;
+  
+  /* 6️⃣ Subtle hints - borders, etc. */
+  --border: #5E648A;
+  
+  /* Input */
+  --input: #1A1D2A;
+  --input-hover: #252837;
+  
+  /* Focus ring - use Fate Purple */
+  --ring: #6D5DF6;
+}
+
+@theme inline {
+  --color-yes: var(--yes);
+  --color-yes-foreground: var(--yes-foreground);
+  --color-no: var(--no);
+  --color-no-foreground: var(--no-foreground);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+  }
+
+  button:not([disabled]),
+  [role="button"]:not([disabled]) {
+    cursor: pointer;
+  }
+}
+
+/* ============ Solid button color - #6D5DF6 Fate Purple ============ */
+/* Remove gradient so buttons use CSS variables */
+/* Light mode: --primary: #6D5DF6 */
+/* Dark mode: --primary: #6D5DF6 */
+
+/* Optional gradient background class (if needed in specific places) */
+.bg-gradient-purple {
+  background: linear-gradient(135deg, #7D6DFF 0%, #6D5DF6 100%);
+}
+
+/* ============ Special effect classes ============ */
+
+/* 3️⃣ Oracle gold glow - for key moments (settlement countdown, final reveal) */
+.accent-glow {
+  box-shadow: 0 0 20px rgba(245, 193, 108, 0.3);
+}
+
+.dark .accent-glow {
+  box-shadow: 0 0 25px rgba(245, 193, 108, 0.4);
+}
+
+/* 2️⃣ Fate reveal glow - uses #6D5DF6 */
+.fate-reveal {
+  animation: pulse-fate 2s ease-in-out infinite;
+}
+
+@keyframes pulse-fate {
+  0%, 100% {
+    box-shadow: 0 0 20px rgba(109, 93, 246, 0.4);
+  }
+  50% {
+    box-shadow: 0 0 30px rgba(109, 93, 246, 0.6);
+  }
+}
+
+/* Dark-mode text color helpers */
+.dark .text-primary-content {
+  color: #E6E8F0; /* Primary text */
+}
+
+.dark .text-secondary-content {
+  color: #9AA0C3; /* Secondary text */
+}
+
+.dark .text-tertiary-content {
+  color: #5E648A; /* Subtle hint */
+}
+
+/* Fate trigger text color - for key moments */
+.dark .text-fate-accent {
+  color: #F5C16C; /* Oracle Gold */
+}
+
+/* Fulfilled text color */
+.dark .text-wish-fulfilled {
+  color: #3CE6B0; /* Spiritual Green */
+}
+
+/* Unfulfilled text color */
+.dark .text-wish-failed {
+  color: #FF5C7C; /* Fate Pink */
+}
+
+/* Fate purple text */
+.dark .text-mystic-purple {
+  color: #6D5DF6;
+}
+
+@utility container {
+  @apply max-w-7xl mx-auto px-4 2xl:px-0;
+}
+

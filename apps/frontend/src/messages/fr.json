@@ -1,0 +1,195 @@
+{
+  "header": {
+    "logIn": "Se connecter",
+    "signUp": "S'inscrire",
+    "rewards": "Récompenses",
+    "documentation": "Documentation",
+    "termsOfUse": "Conditions d'utilisation",
+    "cash": "Cash",
+    "twish": "Twish",
+    "search": {
+      "placeholder": "Rechercher des souhaits et des profils"
+    },
+    "howItWorks": "Comment ça marche",
+    "wish": "Souhait",
+    "theme": {
+      "light": "Clair",
+      "dark": "Sombre"
+    },
+    "navigation": {
+      "trending": "Tendances",
+      "recommended": "Recommandé",
+      "allMarkets": "Tous les marchés",
+      "following": "Abonnements",
+      "explore": "Explorer",
+      "leaderboard": "Classement",
+      "tipLeaderboard": "Classement des tips",
+      "tipHistory": "Historique des tips",
+      "rewards": "Récompenses",
+      "documentation": "Documentation",
+      "termsOfUse": "Conditions d'utilisation",
+      "theme": "Thème",
+      "language": "Langue"
+    }
+  },
+  "sidebar": {
+    "recommended": "Marchés recommandés"
+  },
+  "home": {
+    "recommendedTitle": "Marchés recommandés",
+    "recommendedSubtitle": "Classés par tips Twish",
+    "noMarkets": "Aucun marché trouvé",
+    "connectWallet": "Connectez votre portefeuille pour voir les marchés",
+    "settlements": "Règlements"
+  },
+  "markets": {
+    "title": "Tous les marchés",
+    "subtitle": "Parcourez tous les marchés avec des filtres",
+    "searchPlaceholder": "Rechercher des marchés...",
+    "categoryLabel": "Catégorie",
+    "statusLabel": "Statut",
+    "sortLabel": "Trier par",
+    "empty": "Aucun marché trouvé",
+    "createFirst": "Créer le premier marché",
+    "categories": {
+      "all": "Toutes les catégories",
+      "wealth": "Richesse",
+      "physical_health": "Santé physique",
+      "mental_health": "Santé mentale",
+      "family_friends": "Famille et amis",
+      "happiness": "Bonheur",
+      "self_growth": "Croissance personnelle",
+      "career_achievement": "Réussite professionnelle",
+      "relationships": "Relations",
+      "luck": "Chance",
+      "macro_vision": "Vision macro"
+    },
+    "status": {
+      "all": "Tous",
+      "active": "Actif",
+      "settled": "Réglé",
+      "terminated": "Terminé",
+      "closed": "Fermé"
+    },
+    "sort": {
+      "newest": "Les plus récents",
+      "oldest": "Les plus anciens",
+      "tip": "Le plus de tips"
+    }
+  },
+  "tips": {
+    "period": {
+      "day": "24h",
+      "week": "7j",
+      "month": "30j",
+      "all": "Tout"
+    },
+    "type": {
+      "all": "Tous les tips",
+      "market": "Tips de marché",
+      "comment": "Tips de commentaires"
+    },
+    "direction": {
+      "all": "Tout",
+      "sent": "Envoyés",
+      "received": "Reçus"
+    },
+    "leaderboard": {
+      "title": "Classement des tips",
+      "subtitle": "Top créateurs par montant de tips",
+      "tableTitle": "Top tips",
+      "count": "{{count}} utilisateurs",
+      "empty": "Aucun tip pour l'instant",
+      "tipCount": "{{count}} tips"
+    },
+    "history": {
+      "title": "Historique des tips",
+      "subtitle": "Vos tips envoyés et reçus",
+      "loginRequired": "Connectez-vous pour voir l'historique des tips",
+      "tableTitle": "Historique des tips",
+      "count": "{{count}} enregistrements",
+      "empty": "Aucun enregistrement",
+      "marketFallback": "Marché",
+      "commentFallback": "Commentaire",
+      "sentTo": "Envoyé à",
+      "receivedFrom": "De"
+    }
+  },
+  "twish": {
+    "subtitle": "Gérez votre solde et vos transferts {{token}}.",
+    "walletAddress": "Adresse du portefeuille intégré",
+    "copyAddress": "Copier l'adresse",
+    "copied": "{{label}} copiée",
+    "copyFailed": "Échec de la copie",
+    "notLoggedIn": "Non connecté",
+    "loginRequired": "Veuillez vous connecter à votre portefeuille",
+    "notConfigured": "Twish non configuré",
+    "mintMissing": "Mint du token manquant",
+    "missingInfo": "Informations manquantes",
+    "enterRecipientAmount": "Entrez le destinataire et le montant",
+    "invalidAddress": "Adresse invalide",
+    "invalidAddressDescription": "L'adresse du destinataire est invalide",
+    "invalidAmount": "Montant invalide",
+    "invalidAmountDescription": "Entrez un montant valide",
+    "transferSent": "Transfert envoyé",
+    "transferFailed": "Échec du transfert",
+    "transferFailedDescription": "Impossible d'envoyer Twish",
+    "loginTitle": "Connectez-vous à votre portefeuille intégré",
+    "loginSubtitle": "Utilisez une connexion sociale ou connectez un portefeuille externe.",
+    "receiveTitle": "Recevoir {{token}}",
+    "receiveDescription": "Envoyez {{token}} à votre portefeuille intégré pour recharger.",
+    "mintLabel": "Mint du token",
+    "balanceLabel": "Solde actuel",
+    "sendTitle": "Envoyer {{token}}",
+    "recipientLabel": "Adresse du destinataire",
+    "recipientPlaceholder": "Adresse du portefeuille",
+    "amountLabel": "Montant",
+    "amountPlaceholder": "Montant ({{token}})",
+    "sending": "Envoi...",
+    "sendCta": "Envoyer {{token}}"
+  },
+  "common": {
+    "loading": "Chargement...",
+    "error": "Erreur",
+    "success": "Succès"
+  },
+  "wish": {
+    "createWish": "Créer un souhait",
+    "createWishDescription": "Créez votre propre souhait et laissez les autres participer",
+    "title": "Titre",
+    "titlePlaceholder": "Je souhaite ...",
+    "titleRequired": "Le titre est requis",
+    "titleMaxLength": "Le titre ne peut pas dépasser 150 caractères",
+    "content": "Contenu",
+    "contentPlaceholder": "Entrez la description détaillée de votre souhait (optionnel)",
+    "contentRequired": "Le contenu est requis",
+    "contentMaxLength": "Le contenu ne peut pas dépasser 500 caractères",
+    "characters": "caractères",
+    "options": "Options",
+    "option": "Option",
+    "addOption": "Ajouter une option",
+    "minOptionsHint": "Au moins 2 options sont requises",
+    "optionsHint": "Astuce : Il est recommandé de définir des options contrastées, telles que « gagner de la chance » et « perdre de la chance ». Lors de l'échange de « gagner de la chance », les utilisateurs peuvent remplir le nom/surnom/pseudonyme de la personne recevant la bénédiction. Lors de l'échange de « perdre de la chance », les utilisateurs peuvent remplir le nom/surnom/pseudonyme. Vous pouvez également faire un vœu malveillant, mais vous devez définir des options à la fois pour la négation et l'accomplissement.",
+    "minOptionsError": "Au moins 2 options sont requises",
+    "optionFieldsRequired": "La description et le ticket de l'option sont tous deux requis",
+    "optionDescription": "Description",
+    "optionDescriptionPlaceholder": "Entrez la description de l'option",
+    "optionTicket": "Option",
+    "optionTicketPlaceholder": "Entrez l'option",
+    "startTime": "Heure de début",
+    "startTimeRequired": "L'heure de début est requise",
+    "endTime": "Heure de fin",
+    "endTimeRequired": "L'heure de fin est requise",
+    "endTime7Days": "7 Jours",
+    "endTime1Month": "1 Mois",
+    "endTime1Year": "1 An",
+    "timeRangeError": "L'heure de fin doit être après l'heure de début",
+    "creating": "Création...",
+    "createSuccess": "Souhait créé avec succès !",
+    "createError": "Échec de la création du souhait. Veuillez réessayer.",
+    "cancel": "Annuler",
+    "connectWalletFirst": "Veuillez d'abord connecter votre portefeuille",
+    "deployProxyWalletFirst": "Veuillez d'abord déployer votre portefeuille proxy"
+  }
+}
+

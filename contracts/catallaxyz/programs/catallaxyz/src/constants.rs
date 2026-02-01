@@ -10,8 +10,6 @@ pub const OUTCOME_YES: u8 = 0;
 pub const OUTCOME_NO: u8 = 1;
 
 // Binary market constants
-// Fixed to 2 outcomes (YES/NO) for simplified implementation
-pub const MAX_OUTCOME_TOKENS: usize = 2; // Binary markets always have 2 outcomes (YES and NO)
 pub const PRICE_SCALE: u64 = 1_000_000; // Price precision (10^6)
 
 /// Price tolerance for validation (0.01% at 10^6 scale)

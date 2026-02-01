@@ -1,5 +1,4 @@
 use anchor_lang::prelude::*;
-use crate::constants::MAX_OUTCOME_TOKENS;
 
 #[account]
 pub struct Market {
@@ -28,17 +27,6 @@ pub struct Market {
     pub switchboard_queue: Pubkey,
     /// Fixed Switchboard randomness account for this market
     pub randomness_account: Pubkey,
-    
-    // Reserved for optional tokenized positions (unused in position-based markets).
-    /// Binary outcome token mints (fixed-size array)
-    /// For binary markets: [YES, NO, default, default, ...]
-    /// Only first 2 slots are used if tokenized positions are enabled.
-    /// 
-    /// Benefits of fixed arrays:
-    /// 1. Predictable rent cost (no account reallocation needed)
-    /// 2. Faster serialization/deserialization
-    /// 3. Better safety (compile-time bounds checking)
-    pub outcome_token_mints: [Pubkey; MAX_OUTCOME_TOKENS],
 
     // ============================================
     // Collateral & Position Supply Tracking
@@ -121,46 +109,38 @@ pub mod market_status {
 }
 
 impl Market {
-    // Space calculation - Binary market only (optimized)
+    // Space calculation - Binary market only (optimized, no tokenized positions)
     // discriminator(8) + creator(32) + global(32) + market_id(32)
     // + question(4 + MAX_QUESTION_LEN) + description(4 + MAX_DESCRIPTION_LEN)
     // + yes_description(4 + MAX_OUTCOME_DESCRIPTION_LEN) + no_description(4 + MAX_OUTCOME_DESCRIPTION_LEN)
     // + created_at(8) + last_activity_ts(8) + status(1)
     // + switchboard_queue(32) + randomness_account(32)
-    // + outcome_token_mints: [Pubkey; MAX_OUTCOME_TOKENS] (32 * MAX_OUTCOME_TOKENS)
     // + total_position_collateral(8) + total_yes_supply(8) + total_no_supply(8)
     // + total_redeemable_usdc(8) + total_redeemed_usdc(8)
-    // + last_trade_outcome(1+1)
-    // + reference_agent(1+32) + total_trades(8)
+    // + last_trade_outcome(1+1) + reference_agent(1+32) + total_trades(8)
     // + last_trade_slot(1+8) + last_trade_yes_price(1+8) + last_trade_no_price(1+8)
     // + random_termination_enabled(1) + termination_probability(4) + is_randomly_terminated(1)
     // + final_yes_price(1+8) + final_no_price(1+8) + can_redeem(1) + termination_trade_slot(1+8)
-    // + trade_nonce(8)
-    // + creator_incentive_accrued(8) [fee rates moved to Global]
-    // + is_paused(1) + paused_at(1+8)
-    // + bump(1)
+    // + trade_nonce(8) + creator_incentive_accrued(8)
+    // + is_paused(1) + paused_at(1+8) + bump(1)
     pub const INIT_SPACE: usize = 8 + 32 + 32 + 32
         + 4 + crate::constants::MAX_QUESTION_LEN
         + 4 + crate::constants::MAX_DESCRIPTION_LEN
         + 4 + crate::constants::MAX_OUTCOME_DESCRIPTION_LEN
         + 4 + crate::constants::MAX_OUTCOME_DESCRIPTION_LEN
-        + 8 + 8 + 1 + 32 + 32
-        + (32 * MAX_OUTCOME_TOKENS) + 8 + 8 + 8 + 8 + 8 + 1 + 1 + 1 + 32 + 8
-        + 1 + 8 + 1 + 8 + 1 + 8
-        + 1 + 4 + 1 + 1 + 8 + 1 + 8 + 1 + 1 + 8
-        + 8  // trade_nonce
-        + 8  // creator_incentive_accrued (fee rates removed, read from Global)
-        + 1 + 1 + 8
-        + 1;
-    // ≈ 990 bytes (binary market only, fee rates moved to Global)
-    // Saves 20 bytes per market account
-    // Rent cost: ~0.007 SOL
+        + 8 + 8 + 1 + 32 + 32  // timestamps, status, switchboard
+        + 8 + 8 + 8 + 8 + 8    // collateral and supply tracking
+        + 1 + 1 + 1 + 32 + 8   // last_trade_outcome, reference_agent, total_trades
+        + 1 + 8 + 1 + 8 + 1 + 8  // last trade metadata
+        + 1 + 4 + 1 + 1 + 8 + 1 + 8 + 1 + 1 + 8  // termination fields
+        + 8 + 8  // trade_nonce, creator_incentive_accrued
+        + 1 + 1 + 8 + 1;  // is_paused, paused_at, bump
+    // ≈ 926 bytes (removed 64 bytes from outcome_token_mints)
+    // Rent cost: ~0.0065 SOL
 
     pub fn is_active(&self) -> bool {
         self.status == market_status::ACTIVE
     }
-    
-    // AUDIT FIX v1.2.2: Add status transition methods for cleaner code
     
     /// Check if market is settled
     pub fn is_settled(&self) -> bool {
@@ -185,58 +165,6 @@ impl Market {
     /// Mark market as terminated (inactivity)
     pub fn set_terminated(&mut self) {
         self.status = market_status::TERMINATED;
-    }
-
-    // ============================================
-    // Backward compatibility helper methods
-    // ============================================
-
-    /// Get YES token mint (for optional tokenized positions)
-    pub fn yes_token_mint(&self) -> Option<Pubkey> {
-        let mint = self.outcome_token_mints[0];
-        if mint != Pubkey::default() {
-            Some(mint)
-        } else {
-            None
-        }
-    }
-
-    /// Get NO token mint (for optional tokenized positions)
-    pub fn no_token_mint(&self) -> Option<Pubkey> {
-        let mint = self.outcome_token_mints[1];
-        if mint != Pubkey::default() {
-            Some(mint)
-        } else {
-            None
-        }
-    }
-
-    /// Check if token mints have been initialized (tokenized positions only)
-    pub fn tokens_initialized(&self) -> bool {
-        self.outcome_token_mints[0] != Pubkey::default() &&
-        self.outcome_token_mints[1] != Pubkey::default()
-    }
-    
-    /// Get outcome token mint by index
-    pub fn get_outcome_mint(&self, index: usize) -> Option<Pubkey> {
-        if index < MAX_OUTCOME_TOKENS {
-            let mint = self.outcome_token_mints[index];
-            if mint != Pubkey::default() {
-                return Some(mint);
-            }
-        }
-        None
-    }
-    
-    /// Set outcome token mint by index
-    pub fn set_outcome_mint(&mut self, index: usize, mint: Pubkey) -> Result<()> {
-        use crate::errors::TerminatorError;
-        require!(
-            index < MAX_OUTCOME_TOKENS,
-            TerminatorError::InvalidOutcomeIndex
-        );
-        self.outcome_token_mints[index] = mint;
-        Ok(())
     }
     
     /// Pause market (admin only)

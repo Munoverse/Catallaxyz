@@ -222,7 +222,6 @@ pub struct UserPosition {
 |-------------|------------------|-------------|
 | `deposit_usdc` | Deposit USDC for trading | 存入 USDC 用于交易 |
 | `withdraw_usdc` | Withdraw USDC from market | 从市场提取 USDC |
-| `settle_trade` | Settle a signed trade from matching engine | 结算来自撮合引擎的签名交易 |
 | `split_position_single` | Convert USDC → YES + NO tokens | 将 USDC 转换为 YES + NO 代币 |
 | `merge_position_single` | Convert YES + NO → USDC | 将 YES + NO 代币转换为 USDC |
 

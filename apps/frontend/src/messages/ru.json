@@ -1,0 +1,195 @@
+{
+  "header": {
+    "logIn": "Войти",
+    "signUp": "Зарегистрироваться",
+    "rewards": "Награды",
+    "documentation": "Документация",
+    "termsOfUse": "Условия использования",
+    "cash": "Cash",
+    "twish": "Twish",
+    "search": {
+      "placeholder": "Поиск желаний и профилей"
+    },
+    "howItWorks": "Как это работает",
+    "wish": "Желание",
+    "theme": {
+      "light": "Светлая",
+      "dark": "Тёмная"
+    },
+    "navigation": {
+      "trending": "В тренде",
+      "recommended": "Рекомендуемые",
+      "allMarkets": "Все рынки",
+      "following": "Подписки",
+      "explore": "Исследовать",
+      "leaderboard": "Рейтинг",
+      "tipLeaderboard": "Рейтинг чаевых",
+      "tipHistory": "История чаевых",
+      "rewards": "Награды",
+      "documentation": "Документация",
+      "termsOfUse": "Условия использования",
+      "theme": "Тема",
+      "language": "Язык"
+    }
+  },
+  "sidebar": {
+    "recommended": "Рекомендуемые рынки"
+  },
+  "home": {
+    "recommendedTitle": "Рекомендуемые рынки",
+    "recommendedSubtitle": "Сортировка по чаевым Twish",
+    "noMarkets": "Рынки не найдены",
+    "connectWallet": "Подключите кошелек, чтобы увидеть рынки",
+    "settlements": "Расчеты"
+  },
+  "markets": {
+    "title": "Все рынки",
+    "subtitle": "Просматривайте рынки с фильтрами",
+    "searchPlaceholder": "Поиск рынков...",
+    "categoryLabel": "Категория",
+    "statusLabel": "Статус",
+    "sortLabel": "Сортировать",
+    "empty": "Рынки не найдены",
+    "createFirst": "Создать первый рынок",
+    "categories": {
+      "all": "Все категории",
+      "wealth": "Богатство",
+      "physical_health": "Физическое здоровье",
+      "mental_health": "Психическое здоровье",
+      "family_friends": "Семья и друзья",
+      "happiness": "Счастье",
+      "self_growth": "Саморазвитие",
+      "career_achievement": "Карьерные достижения",
+      "relationships": "Отношения",
+      "luck": "Удача",
+      "macro_vision": "Макровидение"
+    },
+    "status": {
+      "all": "Все",
+      "active": "Активен",
+      "settled": "Рассчитан",
+      "terminated": "Завершен",
+      "closed": "Закрыт"
+    },
+    "sort": {
+      "newest": "Сначала новые",
+      "oldest": "Сначала старые",
+      "tip": "Больше чаевых"
+    }
+  },
+  "tips": {
+    "period": {
+      "day": "24ч",
+      "week": "7д",
+      "month": "30д",
+      "all": "Все"
+    },
+    "type": {
+      "all": "Все чаевые",
+      "market": "Чаевые рынку",
+      "comment": "Чаевые комментариям"
+    },
+    "direction": {
+      "all": "Все",
+      "sent": "Отправленные",
+      "received": "Полученные"
+    },
+    "leaderboard": {
+      "title": "Рейтинг чаевых",
+      "subtitle": "Топ авторов по сумме чаевых",
+      "tableTitle": "Топ чаевых",
+      "count": "{{count}} пользователей",
+      "empty": "Чаевых пока нет",
+      "tipCount": "{{count}} чаевых"
+    },
+    "history": {
+      "title": "История чаевых",
+      "subtitle": "Ваши отправленные и полученные чаевые",
+      "loginRequired": "Войдите, чтобы посмотреть историю чаевых",
+      "tableTitle": "Записи чаевых",
+      "count": "{{count}} записей",
+      "empty": "Нет записей о чаевых",
+      "marketFallback": "Рынок",
+      "commentFallback": "Комментарий",
+      "sentTo": "Отправлено",
+      "receivedFrom": "От"
+    }
+  },
+  "twish": {
+    "subtitle": "Управляйте балансом и переводами {{token}}.",
+    "walletAddress": "Адрес встроенного кошелька",
+    "copyAddress": "Скопировать адрес",
+    "copied": "{{label}} скопировано",
+    "copyFailed": "Не удалось скопировать",
+    "notLoggedIn": "Вы не вошли",
+    "loginRequired": "Пожалуйста, войдите в кошелек",
+    "notConfigured": "Twish не настроен",
+    "mintMissing": "Отсутствует mint токена",
+    "missingInfo": "Недостаточно данных",
+    "enterRecipientAmount": "Введите адрес и сумму",
+    "invalidAddress": "Неверный адрес",
+    "invalidAddressDescription": "Адрес получателя неверен",
+    "invalidAmount": "Неверная сумма",
+    "invalidAmountDescription": "Введите корректную сумму",
+    "transferSent": "Перевод отправлен",
+    "transferFailed": "Перевод не удался",
+    "transferFailedDescription": "Не удалось отправить Twish",
+    "loginTitle": "Войдите во встроенный кошелек",
+    "loginSubtitle": "Используйте соцвход или подключите внешний кошелек.",
+    "receiveTitle": "Получить {{token}}",
+    "receiveDescription": "Отправьте {{token}} на встроенный кошелек для пополнения.",
+    "mintLabel": "Mint токена",
+    "balanceLabel": "Текущий баланс",
+    "sendTitle": "Отправить {{token}}",
+    "recipientLabel": "Адрес получателя",
+    "recipientPlaceholder": "Адрес кошелька",
+    "amountLabel": "Сумма",
+    "amountPlaceholder": "Сумма ({{token}})",
+    "sending": "Отправка...",
+    "sendCta": "Отправить {{token}}"
+  },
+  "common": {
+    "loading": "Загрузка...",
+    "error": "Ошибка",
+    "success": "Успешно"
+  },
+  "wish": {
+    "createWish": "Создать желание",
+    "createWishDescription": "Создайте свое желание и позвольте другим участвовать",
+    "title": "Заголовок",
+    "titlePlaceholder": "Я желаю ...",
+    "titleRequired": "Заголовок обязателен",
+    "titleMaxLength": "Заголовок не может превышать 150 символов",
+    "content": "Содержание",
+    "contentPlaceholder": "Введите подробное описание вашего желания (необязательно)",
+    "contentRequired": "Содержание обязательно",
+    "contentMaxLength": "Содержание не может превышать 500 символов",
+    "characters": "символов",
+    "options": "Варианты",
+    "option": "Вариант",
+    "addOption": "Добавить вариант",
+    "minOptionsHint": "Требуется минимум 2 варианта",
+    "optionsHint": "Совет: рекомендуется установить контрастные варианты, например, «получить удачу» и «потерять удачу». При торговле «получить удачу» пользователи могут указать имя/никнейм/прозвище человека, получающего благословение. При торговле «потерять удачу» пользователи могут указать имя/никнейм/прозвище. Вы также можете загадать злое желание, но вам нужно установить варианты как для отрицания, так и для исполнения.",
+    "minOptionsError": "Требуется минимум 2 варианта",
+    "optionFieldsRequired": "Описание варианта и билет обязательны",
+    "optionDescription": "Описание",
+    "optionDescriptionPlaceholder": "Введите описание варианта",
+    "optionTicket": "Вариант",
+    "optionTicketPlaceholder": "Введите вариант",
+    "startTime": "Время начала",
+    "startTimeRequired": "Время начала обязательно",
+    "endTime": "Время окончания",
+    "endTimeRequired": "Время окончания обязательно",
+    "endTime7Days": "7 дней",
+    "endTime1Month": "1 месяц",
+    "endTime1Year": "1 год",
+    "timeRangeError": "Время окончания должно быть после времени начала",
+    "creating": "Создание...",
+    "createSuccess": "Желание успешно создано!",
+    "createError": "Не удалось создать желание. Пожалуйста, попробуйте снова.",
+    "cancel": "Отмена",
+    "connectWalletFirst": "Пожалуйста, сначала подключите кошелек",
+    "deployProxyWalletFirst": "Пожалуйста, сначала разверните прокси-кошелек"
+  }
+}
+

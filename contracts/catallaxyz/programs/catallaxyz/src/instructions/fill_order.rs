@@ -9,10 +9,7 @@
 //! - Assets are transferred atomically
 
 use anchor_lang::prelude::*;
-use anchor_lang::solana_program::sysvar::instructions::{
-    load_current_index_checked, load_instruction_at_checked, ID as INSTRUCTIONS_ID,
-};
-use core::str::FromStr;
+use anchor_lang::solana_program::sysvar::instructions::ID as INSTRUCTIONS_ID;
 use crate::constants::{GLOBAL_SEED, MARKET_SEED};
 use crate::errors::TerminatorError;
 use crate::events::OrderFilled;
@@ -22,6 +19,7 @@ use crate::states::{
     hash_order, token_id,
 };
 use crate::instructions::calculator::{calculate_taking_amount, calculate_fee, validate_order, validate_taker};
+use crate::instructions::ed25519_verify::verify_ed25519_preceding;
 
 /// Parameters for fill_order instruction
 #[derive(AnchorSerialize, AnchorDeserialize, Clone, Debug)]
@@ -125,84 +123,6 @@ pub struct FillOrder<'info> {
     pub system_program: Program<'info, System>,
 }
 
-/// Read u16 from instruction data
-fn read_u16(data: &[u8], offset: &mut usize) -> Result<u16> {
-    let end = offset.saturating_add(2);
-    require!(end <= data.len(), TerminatorError::InvalidSignature);
-    let value = u16::from_le_bytes([data[*offset], data[*offset + 1]]);
-    *offset = end;
-    Ok(value)
-}
-
-/// Verify Ed25519 signature from preceding instruction
-fn verify_ed25519_ix(
-    instructions: &AccountInfo,
-    expected_pubkey: &Pubkey,
-    expected_msg: &[u8],
-    expected_sig: &[u8; 64],
-) -> Result<()> {
-    let current_index = load_current_index_checked(instructions)?;
-    require!(current_index > 0, TerminatorError::InvalidSignature);
-
-    let ed25519_ix = load_instruction_at_checked((current_index - 1) as usize, instructions)?;
-    let ed25519_program_id =
-        Pubkey::from_str("Ed25519SigVerify111111111111111111111111111")
-            .map_err(|_| TerminatorError::InvalidSignature)?;
-    require!(
-        ed25519_ix.program_id == ed25519_program_id,
-        TerminatorError::InvalidSignature
-    );
-
-    let data = ed25519_ix.data.as_slice();
-    require!(data.len() >= 2, TerminatorError::InvalidSignature);
-    let num_signatures = data[0];
-    require!(num_signatures == 1, TerminatorError::InvalidSignature);
-
-    let mut offset = 2;
-    let sig_offset = read_u16(data, &mut offset)?;
-    let sig_ix_index = read_u16(data, &mut offset)?;
-    let pubkey_offset = read_u16(data, &mut offset)?;
-    let pubkey_ix_index = read_u16(data, &mut offset)?;
-    let msg_offset = read_u16(data, &mut offset)?;
-    let msg_size = read_u16(data, &mut offset)?;
-    let msg_ix_index = read_u16(data, &mut offset)?;
-
-    const INSTRUCTION_DATA_INDEX: u16 = u16::MAX;
-    require!(
-        sig_ix_index == INSTRUCTION_DATA_INDEX
-            && pubkey_ix_index == INSTRUCTION_DATA_INDEX
-            && msg_ix_index == INSTRUCTION_DATA_INDEX,
-        TerminatorError::InvalidSignature
-    );
-
-    let sig_start = sig_offset as usize;
-    let sig_end = sig_start.saturating_add(64);
-    let pk_start = pubkey_offset as usize;
-    let pk_end = pk_start.saturating_add(32);
-    let msg_start = msg_offset as usize;
-    let msg_end = msg_start.saturating_add(msg_size as usize);
-
-    require!(
-        sig_end <= data.len() && pk_end <= data.len() && msg_end <= data.len(),
-        TerminatorError::InvalidSignature
-    );
-    require!(msg_size as usize == expected_msg.len(), TerminatorError::InvalidSignature);
-    require!(
-        data[sig_start..sig_end] == expected_sig[..],
-        TerminatorError::InvalidSignature
-    );
-    require!(
-        data[pk_start..pk_end] == expected_pubkey.to_bytes(),
-        TerminatorError::InvalidSignature
-    );
-    require!(
-        &data[msg_start..msg_end] == expected_msg,
-        TerminatorError::InvalidSignature
-    );
-
-    Ok(())
-}
-
 pub fn handler(ctx: Context<FillOrder>, params: FillOrderParams) -> Result<()> {
     let order = &params.signed_order.order;
     let fill_amount = params.fill_amount;
@@ -226,7 +146,7 @@ pub fn handler(ctx: Context<FillOrder>, params: FillOrderParams) -> Result<()> {
     
     // Verify maker's signature on the order
     let order_hash = hash_order(order);
-    verify_ed25519_ix(
+    verify_ed25519_preceding(
         &ctx.accounts.instructions,
         &order.signer, // signer signs the order (can be maker or delegate)
         &order_hash,

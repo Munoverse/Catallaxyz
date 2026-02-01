@@ -22,8 +22,9 @@ export interface DbPoolConfig {
   connectionTimeoutMs?: number;
 }
 
+// AUDIT FIX D-H7: Increase default pool size for high concurrency
 const DEFAULT_CONFIG: Required<DbPoolConfig> = {
-  maxConnections: 10,
+  maxConnections: 20, // Increased from 10 for better concurrency handling
   idleTimeoutMs: 30000,
   connectionTimeoutMs: 5000,
 };
@@ -57,14 +58,21 @@ export function getPool(): Pool | null {
   }
 
   if (!pool) {
+    // AUDIT FIX D-H5: Ensure SSL is enabled in production
+    const isProduction = process.env.NODE_ENV === 'production';
+    const sslDisabled = process.env.DATABASE_SSL === 'false';
+    
+    if (isProduction && sslDisabled) {
+      console.warn('[DB Pool] WARNING: SSL is disabled in production environment!');
+    }
+    
     const config: PoolConfig = {
       connectionString: process.env.DATABASE_URL,
-      ssl:
-        process.env.DATABASE_SSL === 'false'
-          ? false
-          : {
-              rejectUnauthorized: process.env.NODE_ENV === 'production',
-            },
+      ssl: sslDisabled
+        ? false
+        : {
+            rejectUnauthorized: isProduction,
+          },
       max: poolConfig.maxConnections ?? Number(process.env.DB_POOL_MAX) || DEFAULT_CONFIG.maxConnections,
       idleTimeoutMillis: poolConfig.idleTimeoutMs ?? Number(process.env.DB_IDLE_TIMEOUT_MS) || DEFAULT_CONFIG.idleTimeoutMs,
       connectionTimeoutMillis: poolConfig.connectionTimeoutMs ?? Number(process.env.DB_CONNECT_TIMEOUT_MS) || DEFAULT_CONFIG.connectionTimeoutMs,

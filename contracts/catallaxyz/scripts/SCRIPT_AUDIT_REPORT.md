@@ -21,7 +21,7 @@ This audit identified **20 scripts** (15 TypeScript, 4 shell scripts, 1 utility)
 |--------|---------|--------|-------|
 | `check-program-config.ts` | Check program configuration and treasury status | ✅ Active | Well-structured, comprehensive |
 | `create-test-usdc.ts` | Create test USDC token mint on devnet | ✅ Active | Creates mint + config file |
-| `create-twish-token.ts` | Create Twish token mint for tipping | ✅ Active | Similar structure to create-test-usdc |
+| `create-quinn-token.ts` | Create QUINN token mint for tipping | ✅ Active | Similar structure to create-test-usdc |
 | `initialize-creator-treasury.ts` | Initialize creator incentive treasury | ✅ Active | **Redundant** (see consolidation) |
 | `initialize-mainnet.ts` | One-click mainnet initialization | ✅ Active | **Consolidates** multiple treasury inits |
 | `initialize-platform-treasury.ts` | Initialize platform treasury | ✅ Active | **Redundant** (see consolidation) |
@@ -30,7 +30,7 @@ This audit identified **20 scripts** (15 TypeScript, 4 shell scripts, 1 utility)
 | `initialize-with-tusdc.ts` | Initialize Global account with tUSDC | ✅ Active | Devnet-specific initialization |
 | `mint-test-usdc.ts` | Mint test USDC to self | ✅ Active | **Could consolidate** with mint-tusdc-to-user |
 | `mint-tusdc-to-user.ts` | Mint tUSDC to specified user | ✅ Active | **Could consolidate** with mint-test-usdc |
-| `mint-twish.ts` | Mint Twish tokens (flexible recipient) | ✅ Active | Well-designed, handles both cases |
+| `mint-quinn.ts` | Mint QUINN tokens (flexible recipient) | ✅ Active | Well-designed, handles both cases |
 | `set-keeper.ts` | Set/update keeper wallet address | ✅ Active | Admin function |
 | `sync-constants.ts` | Sync constants from Rust to TypeScript | ✅ Active | Build utility |
 | `verify-security.ts` | Security verification checklist | ✅ Active | Comprehensive security checks |
@@ -91,15 +91,15 @@ This audit identified **20 scripts** (15 TypeScript, 4 shell scripts, 1 utility)
 
 1. `mint-test-usdc.ts` - Mints to self only
 2. `mint-tusdc-to-user.ts` - Mints to specified user
-3. `mint-twish.ts` - Handles both self and user (flexible)
+3. `mint-quinn.ts` - Handles both self and user (flexible)
 
 **Analysis:**
-- `mint-twish.ts` is **better designed** - handles both cases in one script
-- `mint-test-usdc.ts` and `mint-tusdc-to-user.ts` could be **consolidated** like `mint-twish.ts`
+- `mint-quinn.ts` is **better designed** - handles both cases in one script
+- `mint-test-usdc.ts` and `mint-tusdc-to-user.ts` could be **consolidated** like `mint-quinn.ts`
 
 **Recommendation:**
 - ✅ **Consolidate** `mint-test-usdc.ts` and `mint-tusdc-to-user.ts` into a single script
-- ✅ **Use** `mint-twish.ts` as the template for the consolidated version
+- ✅ **Use** `mint-quinn.ts` as the template for the consolidated version
 - ⚠️ **Update** package.json scripts accordingly
 
 **Example Consolidation:**
@@ -142,7 +142,7 @@ This audit identified **20 scripts** (15 TypeScript, 4 shell scripts, 1 utility)
 **Issue:** Two token creation scripts with very similar structure:
 
 - `create-test-usdc.ts` (115 lines)
-- `create-twish-token.ts` (122 lines)
+- `create-quinn-token.ts` (122 lines)
 
 **Analysis:**
 - Both scripts follow the same pattern:
@@ -234,7 +234,7 @@ This audit identified **20 scripts** (15 TypeScript, 4 shell scripts, 1 utility)
 
 3. **Consolidate minting scripts:**
    - Merge `mint-test-usdc.ts` + `mint-tusdc-to-user.ts` → `mint-tusdc.ts`
-   - Use `mint-twish.ts` as template
+   - Use `mint-quinn.ts` as template
 
 4. **Create devnet initialization script:**
    - `initialize-devnet.ts` - One-click devnet setup
@@ -260,7 +260,7 @@ This audit identified **20 scripts** (15 TypeScript, 4 shell scripts, 1 utility)
 ### Excellent Scripts ⭐⭐⭐⭐⭐
 - `initialize-mainnet.ts` - Comprehensive, well-structured
 - `verify-security.ts` - Thorough security checks
-- `mint-twish.ts` - Flexible design, handles multiple cases
+- `mint-quinn.ts` - Flexible design, handles multiple cases
 - `check-program-config.ts` - Comprehensive configuration checking
 - `utils/anchor-config.ts` - Well-designed utility
 

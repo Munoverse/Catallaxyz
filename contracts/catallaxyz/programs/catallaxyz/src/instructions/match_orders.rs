@@ -9,10 +9,7 @@
 //! - MERGE: Sell YES vs Sell NO (merge tokens back to USDC)
 
 use anchor_lang::prelude::*;
-use anchor_lang::solana_program::sysvar::instructions::{
-    load_current_index_checked, load_instruction_at_checked, ID as INSTRUCTIONS_ID,
-};
-use core::str::FromStr;
+use anchor_lang::solana_program::sysvar::instructions::ID as INSTRUCTIONS_ID;
 use crate::constants::{GLOBAL_SEED, MARKET_SEED, PRICE_SCALE};
 use crate::errors::TerminatorError;
 use crate::events::{OrderFilled, OrdersMatched};
@@ -22,6 +19,7 @@ use crate::states::{
     hash_order, is_crossing, token_id,
 };
 use crate::instructions::calculator::{calculate_taking_amount, calculate_fee, validate_order, validate_taker};
+use crate::instructions::ed25519_verify::{verify_ed25519_at_index, get_current_instruction_index};
 
 /// Maximum number of maker orders that can be matched in a single instruction
 pub const MAX_MAKER_ORDERS: usize = 5;
@@ -122,82 +120,6 @@ pub struct MatchOrders<'info> {
     // - maker_order_status (OrderStatus)
 }
 
-/// Read u16 from instruction data
-fn read_u16(data: &[u8], offset: &mut usize) -> Result<u16> {
-    let end = offset.saturating_add(2);
-    require!(end <= data.len(), TerminatorError::InvalidSignature);
-    let value = u16::from_le_bytes([data[*offset], data[*offset + 1]]);
-    *offset = end;
-    Ok(value)
-}
-
-/// Verify Ed25519 signature at a specific instruction index
-fn verify_ed25519_at_index(
-    instructions: &AccountInfo,
-    ix_index: usize,
-    expected_pubkey: &Pubkey,
-    expected_msg: &[u8],
-    expected_sig: &[u8; 64],
-) -> Result<()> {
-    let ed25519_ix = load_instruction_at_checked(ix_index, instructions)?;
-    let ed25519_program_id =
-        Pubkey::from_str("Ed25519SigVerify111111111111111111111111111")
-            .map_err(|_| TerminatorError::InvalidSignature)?;
-    require!(
-        ed25519_ix.program_id == ed25519_program_id,
-        TerminatorError::InvalidSignature
-    );
-
-    let data = ed25519_ix.data.as_slice();
-    require!(data.len() >= 2, TerminatorError::InvalidSignature);
-    let num_signatures = data[0];
-    require!(num_signatures == 1, TerminatorError::InvalidSignature);
-
-    let mut offset = 2;
-    let sig_offset = read_u16(data, &mut offset)?;
-    let sig_ix_index = read_u16(data, &mut offset)?;
-    let pubkey_offset = read_u16(data, &mut offset)?;
-    let pubkey_ix_index = read_u16(data, &mut offset)?;
-    let msg_offset = read_u16(data, &mut offset)?;
-    let msg_size = read_u16(data, &mut offset)?;
-    let msg_ix_index = read_u16(data, &mut offset)?;
-
-    const INSTRUCTION_DATA_INDEX: u16 = u16::MAX;
-    require!(
-        sig_ix_index == INSTRUCTION_DATA_INDEX
-            && pubkey_ix_index == INSTRUCTION_DATA_INDEX
-            && msg_ix_index == INSTRUCTION_DATA_INDEX,
-        TerminatorError::InvalidSignature
-    );
-
-    let sig_start = sig_offset as usize;
-    let sig_end = sig_start.saturating_add(64);
-    let pk_start = pubkey_offset as usize;
-    let pk_end = pk_start.saturating_add(32);
-    let msg_start = msg_offset as usize;
-    let msg_end = msg_start.saturating_add(msg_size as usize);
-
-    require!(
-        sig_end <= data.len() && pk_end <= data.len() && msg_end <= data.len(),
-        TerminatorError::InvalidSignature
-    );
-    require!(msg_size as usize == expected_msg.len(), TerminatorError::InvalidSignature);
-    require!(
-        data[sig_start..sig_end] == expected_sig[..],
-        TerminatorError::InvalidSignature
-    );
-    require!(
-        data[pk_start..pk_end] == expected_pubkey.to_bytes(),
-        TerminatorError::InvalidSignature
-    );
-    require!(
-        &data[msg_start..msg_end] == expected_msg,
-        TerminatorError::InvalidSignature
-    );
-
-    Ok(())
-}
-
 pub fn handler<'info>(
     ctx: Context<'_, '_, 'info, 'info, MatchOrders<'info>>,
     params: MatchOrdersParams,
@@ -232,7 +154,7 @@ pub fn handler<'info>(
     }
     
     // Get current instruction index for signature verification
-    let current_index = load_current_index_checked(&ctx.accounts.instructions)?;
+    let current_index = get_current_instruction_index(&ctx.accounts.instructions)?;
     
     // Verify taker signature (should be at index current_index - (maker_count + 1))
     let taker_sig_index = current_index
@@ -301,6 +223,24 @@ pub fn handler<'info>(
         let mut maker_balance: Account<UserBalance> = Account::try_from(maker_balance_info)?;
         let mut maker_position: Account<UserPosition> = Account::try_from(maker_position_info)?;
         let mut maker_order_status: Account<OrderStatus> = Account::try_from(maker_order_status_info)?;
+        
+        // AUDIT FIX C-C2: Validate maker accounts belong to correct market and user
+        require!(
+            maker_balance.market == ctx.accounts.market.key(),
+            TerminatorError::InvalidAccountInput
+        );
+        require!(
+            maker_position.market == ctx.accounts.market.key(),
+            TerminatorError::InvalidAccountInput
+        );
+        require!(
+            maker_balance.user == order.maker,
+            TerminatorError::Unauthorized
+        );
+        require!(
+            maker_position.user == order.maker,
+            TerminatorError::Unauthorized
+        );
         
         // Validate maker order
         validate_order(order, clock.unix_timestamp, maker_nonce.current_nonce)?;
@@ -475,7 +415,8 @@ fn execute_complementary_match(
         // Maker gives tokens, receives USDC
         
         let taker_pays = taking_amount;
-        let maker_receives = taking_amount.saturating_sub(fee);
+        // AUDIT FIX C-C3: Use checked_sub with explicit error handling
+        let maker_receives = taking_amount.checked_sub(fee).ok_or(TerminatorError::ArithmeticOverflow)?;
         
         require!(taker_balance.usdc_balance >= taker_pays, TerminatorError::InsufficientBalance);
         
@@ -502,7 +443,8 @@ fn execute_complementary_match(
         // Maker gives USDC, receives tokens
         
         let maker_pays = taking_amount;
-        let taker_receives = taking_amount.saturating_sub(fee);
+        // AUDIT FIX C-C3: Use checked_sub with explicit error handling
+        let taker_receives = taking_amount.checked_sub(fee).ok_or(TerminatorError::ArithmeticOverflow)?;
         
         require!(maker_balance.usdc_balance >= maker_pays, TerminatorError::InsufficientBalance);
         

@@ -56,7 +56,7 @@ pub struct TerminateIfInactive<'info> {
     #[account(
         mut,
         constraint = creator_usdc_account.owner == market.creator @ TerminatorError::InvalidTokenAccountOwner,
-        constraint = creator_usdc_account.mint == global.usdc_mint @ TerminatorError::InvalidMint
+        constraint = creator_usdc_account.mint == global.usdc_mint @ TerminatorError::InvalidTokenMint
     )]
     pub creator_usdc_account: Box<InterfaceAccount<'info, TokenAccount>>,
 
